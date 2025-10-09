@@ -14,22 +14,23 @@ interface SiteChartsProps {
 const SiteCharts = ({ data, viewType, metricType, dateFrom, dateTo }: SiteChartsProps) => {
   const dateRanges = getDateRanges();
 
-  // Use custom date range if provided, otherwise use predefined ranges
+  // Custom date range only applies to "All Active Sites by Agent"
   const totalData = viewType === 'individual' 
     ? filterAndGroupSites(data, dateFrom, dateTo)
     : filterAndGroupSitesByTeam(data, getTeamForAgent, dateFrom, dateTo);
     
+  // Other charts always use their predefined date ranges
   const weekData = viewType === 'individual'
-    ? filterAndGroupSites(data, dateFrom || dateRanges.thisWeek.start, dateTo || dateRanges.thisWeek.end)
-    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateFrom || dateRanges.thisWeek.start, dateTo || dateRanges.thisWeek.end);
+    ? filterAndGroupSites(data, dateRanges.thisWeek.start, dateRanges.thisWeek.end)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.thisWeek.start, dateRanges.thisWeek.end);
     
   const yesterdayData = viewType === 'individual'
-    ? filterAndGroupSites(data, dateFrom || dateRanges.yesterday.start, dateTo || dateRanges.yesterday.end)
-    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateFrom || dateRanges.yesterday.start, dateTo || dateRanges.yesterday.end);
+    ? filterAndGroupSites(data, dateRanges.yesterday.start, dateRanges.yesterday.end)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.yesterday.start, dateRanges.yesterday.end);
     
   const todayData = viewType === 'individual'
-    ? filterAndGroupSites(data, dateFrom || dateRanges.today.start, dateTo || dateRanges.today.end)
-    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateFrom || dateRanges.today.start, dateTo || dateRanges.today.end);
+    ? filterAndGroupSites(data, dateRanges.today.start, dateRanges.today.end)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.today.start, dateRanges.today.end);
   
   const weeklyTrendData = groupByWeekAndAgent(data, viewType === 'team' ? getTeamForAgent : undefined);
   

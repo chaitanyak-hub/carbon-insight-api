@@ -134,6 +134,12 @@ const Index = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Note: Date filters apply only to "All Active Sites by Agent" chart
+                    </p>
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium mb-2 block">Date From</label>
