@@ -1,18 +1,31 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { filterAndGroupSites, getDateRanges, SiteRecord } from "@/utils/chartHelpers";
+import { filterAndGroupSites, filterAndGroupSitesByTeam, getDateRanges, SiteRecord } from "@/utils/chartHelpers";
+import { getTeamForAgent } from "@/utils/teamMapping";
 
 interface SiteChartsProps {
   data: SiteRecord[];
+  viewType: 'individual' | 'team';
 }
 
-const SiteCharts = ({ data }: SiteChartsProps) => {
+const SiteCharts = ({ data, viewType }: SiteChartsProps) => {
   const dateRanges = getDateRanges();
 
-  const totalData = filterAndGroupSites(data);
-  const weekData = filterAndGroupSites(data, dateRanges.thisWeek.start, dateRanges.thisWeek.end);
-  const yesterdayData = filterAndGroupSites(data, dateRanges.yesterday.start, dateRanges.yesterday.end);
-  const todayData = filterAndGroupSites(data, dateRanges.today.start, dateRanges.today.end);
+  const totalData = viewType === 'individual' 
+    ? filterAndGroupSites(data)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent);
+    
+  const weekData = viewType === 'individual'
+    ? filterAndGroupSites(data, dateRanges.thisWeek.start, dateRanges.thisWeek.end)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.thisWeek.start, dateRanges.thisWeek.end);
+    
+  const yesterdayData = viewType === 'individual'
+    ? filterAndGroupSites(data, dateRanges.yesterday.start, dateRanges.yesterday.end)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.yesterday.start, dateRanges.yesterday.end);
+    
+  const todayData = viewType === 'individual'
+    ? filterAndGroupSites(data, dateRanges.today.start, dateRanges.today.end)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.today.start, dateRanges.today.end);
 
   const ChartCard = ({ 
     title, 

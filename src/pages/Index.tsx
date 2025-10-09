@@ -6,11 +6,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import SiteCharts from "@/components/SiteCharts";
 import { SiteRecord } from "@/utils/chartHelpers";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const [data, setData] = useState<SiteRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewType, setViewType] = useState<'individual' | 'team'>('individual');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,9 +94,17 @@ const Index = () => {
                     Active sites by EDF Energy agents
                   </CardDescription>
                 </CardHeader>
+                <CardContent>
+                  <Tabs value={viewType} onValueChange={(v) => setViewType(v as 'individual' | 'team')}>
+                    <TabsList className="grid w-full max-w-md grid-cols-2">
+                      <TabsTrigger value="individual">Individual Agents</TabsTrigger>
+                      <TabsTrigger value="team">Teams</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </CardContent>
               </Card>
 
-              <SiteCharts data={data} />
+              <SiteCharts data={data} viewType={viewType} />
 
               {/* Raw Data Card (Collapsible) */}
               <Card>

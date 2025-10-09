@@ -70,6 +70,43 @@ export const filterAndGroupSites = (
     .sort((a, b) => b.sites - a.sites);
 };
 
+export const filterAndGroupSitesByTeam = (
+  records: SiteRecord[],
+  teamMapping: (email: string) => string | null,
+  startDate?: Date,
+  endDate?: Date
+): { name: string; sites: number }[] => {
+  // Filter for active sites with @edfenergy.com
+  let filtered = records.filter(
+    (record) =>
+      record.site_status === 'ACTIVE' &&
+      record.agent_name &&
+      typeof record.agent_name === 'string' &&
+      record.agent_name.trim().includes('@edfenergy.com')
+  );
+
+  // Apply date filter if provided
+  if (startDate && endDate && filtered.length > 0) {
+    filtered = filtered.filter((record) =>
+      record.onboard_date ? isDateInRange(record.onboard_date, startDate, endDate) : false
+    );
+  }
+
+  // Group by team and count
+  const grouped = filtered.reduce((acc, record) => {
+    const teamName = teamMapping(record.agent_name!);
+    if (teamName) {
+      acc[teamName] = (acc[teamName] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Convert to array and sort by count
+  return Object.entries(grouped)
+    .map(([name, sites]) => ({ name, sites }))
+    .sort((a, b) => b.sites - a.sites);
+};
+
 export const getDateRanges = () => {
   const now = new Date();
   const today = new Date(now.setHours(0, 0, 0, 0));
