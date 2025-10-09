@@ -15,16 +15,17 @@ const Index = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(
-          'https://api.thelabrador.co.uk/carbon/v3/site-activity?utmSource=edf&siteType=ndomestic',
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'e_api_key': 'U2FsdGVkX192qixrCGGatPyyOZ5JgJlfXxYWqyouY86AVVRAkktVgOiAwm93hdkGaX/DbFqO5qeqcE9+ael15g==',
-            },
-          }
-        );
+        // Using CORS proxy to bypass CORS restrictions
+        const targetUrl = 'https://api.thelabrador.co.uk/carbon/v3/site-activity?utmSource=edf&siteType=ndomestic';
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+        
+        const response = await fetch(proxyUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'e_api_key': 'U2FsdGVkX192qixrCGGatPyyOZ5JgJlfXxYWqyouY86AVVRAkktVgOiAwm93hdkGaX/DbFqO5qeqcE9+ael15g==',
+          },
+        });
 
         if (!response.ok) {
           throw new Error(`API Error: ${response.status} ${response.statusText}`);
