@@ -46,7 +46,8 @@ export const filterAndGroupSites = (
     (record) =>
       record.site_status === 'ACTIVE' &&
       record.agent_name &&
-      record.agent_name.includes('@edfenergy.com')
+      typeof record.agent_name === 'string' &&
+      record.agent_name.trim().includes('@edfenergy.com')
   );
 
   // Apply date filter if provided
