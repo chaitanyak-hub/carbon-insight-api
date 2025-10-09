@@ -2,13 +2,17 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Leaf, AlertCircle, Download } from "lucide-react";
+import { Loader2, Leaf, AlertCircle, Download, CalendarIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import SiteCharts from "@/components/SiteCharts";
 import { SiteRecord } from "@/utils/chartHelpers";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [data, setData] = useState<SiteRecord[]>([]);
@@ -16,6 +20,8 @@ const Index = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewType, setViewType] = useState<'individual' | 'team'>('individual');
   const [metricType, setMetricType] = useState<'all' | 'sites' | 'contacts' | 'interaction'>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -128,6 +134,62 @@ const Index = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Date From</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !dateFrom && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateFrom ? format(dateFrom, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={dateFrom}
+                            onSelect={setDateFrom}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Date To</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !dateTo && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateTo ? format(dateTo, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={dateTo}
+                            onSelect={setDateTo}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                  
                   <div>
                     <label className="text-sm font-medium mb-2 block">Display Metrics</label>
                     <Select value={metricType} onValueChange={(value: any) => setMetricType(value)}>
@@ -152,7 +214,13 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <SiteCharts data={data} viewType={viewType} metricType={metricType} />
+              <SiteCharts 
+                data={data} 
+                viewType={viewType} 
+                metricType={metricType}
+                dateFrom={dateFrom}
+                dateTo={dateTo}
+              />
             </>
           )}
         </div>

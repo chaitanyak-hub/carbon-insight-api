@@ -7,26 +7,29 @@ interface SiteChartsProps {
   data: SiteRecord[];
   viewType: 'individual' | 'team';
   metricType: 'all' | 'sites' | 'contacts' | 'interaction';
+  dateFrom?: Date;
+  dateTo?: Date;
 }
 
-const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
+const SiteCharts = ({ data, viewType, metricType, dateFrom, dateTo }: SiteChartsProps) => {
   const dateRanges = getDateRanges();
 
+  // Use custom date range if provided, otherwise use predefined ranges
   const totalData = viewType === 'individual' 
-    ? filterAndGroupSites(data)
-    : filterAndGroupSitesByTeam(data, getTeamForAgent);
+    ? filterAndGroupSites(data, dateFrom, dateTo)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateFrom, dateTo);
     
   const weekData = viewType === 'individual'
-    ? filterAndGroupSites(data, dateRanges.thisWeek.start, dateRanges.thisWeek.end)
-    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.thisWeek.start, dateRanges.thisWeek.end);
+    ? filterAndGroupSites(data, dateFrom || dateRanges.thisWeek.start, dateTo || dateRanges.thisWeek.end)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateFrom || dateRanges.thisWeek.start, dateTo || dateRanges.thisWeek.end);
     
   const yesterdayData = viewType === 'individual'
-    ? filterAndGroupSites(data, dateRanges.yesterday.start, dateRanges.yesterday.end)
-    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.yesterday.start, dateRanges.yesterday.end);
+    ? filterAndGroupSites(data, dateFrom || dateRanges.yesterday.start, dateTo || dateRanges.yesterday.end)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateFrom || dateRanges.yesterday.start, dateTo || dateRanges.yesterday.end);
     
   const todayData = viewType === 'individual'
-    ? filterAndGroupSites(data, dateRanges.today.start, dateRanges.today.end)
-    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.today.start, dateRanges.today.end);
+    ? filterAndGroupSites(data, dateFrom || dateRanges.today.start, dateTo || dateRanges.today.end)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateFrom || dateRanges.today.start, dateTo || dateRanges.today.end);
   
   const weeklyTrendData = groupByWeekAndAgent(data, viewType === 'team' ? getTeamForAgent : undefined);
   
@@ -51,15 +54,16 @@ const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
     const totalSites = data.reduce((sum, item) => sum + item.sites, 0);
     const totalContacts = data.reduce((sum, item) => sum + item.uniqueContacts, 0);
     const totalInteraction = data.reduce((sum, item) => sum + item.customerInteraction, 0);
+    const interactionPercentage = totalContacts > 0 ? Math.round((totalInteraction / totalContacts) * 100) : 0;
     
     return (
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">
-            {title} ({metricType === 'all' ? `Sites: ${totalSites}, Contacts: ${totalContacts}, Interactions: ${totalInteraction}` : 
+            {title} ({metricType === 'all' ? `Sites: ${totalSites}, Contacts: ${totalContacts}, Interactions: ${totalInteraction} (${interactionPercentage}%)` : 
                      metricType === 'sites' ? `Sites: ${totalSites}` :
                      metricType === 'contacts' ? `Unique Contacts: ${totalContacts}` :
-                     `Customer Interactions: ${totalInteraction}`})
+                     `Customer Interactions: ${totalInteraction} (${interactionPercentage}%)`})
           </CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
@@ -99,7 +103,10 @@ const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
                             <p className="text-sm text-muted-foreground">Unique Contacts: {data.uniqueContacts}</p>
                           )}
                           {(metricType === 'all' || metricType === 'interaction') && (
-                            <p className="text-sm text-muted-foreground">Customer Interactions: {data.customerInteraction}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Customer Interactions: {data.customerInteraction} 
+                              {data.uniqueContacts > 0 && ` (${Math.round((data.customerInteraction / data.uniqueContacts) * 100)}%)`}
+                            </p>
                           )}
                         </div>
                       );

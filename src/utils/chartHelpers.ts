@@ -20,13 +20,18 @@ export const formatAgentName = (email: string): string => {
 
 export const getStartOfWeek = (date: Date): Date => {
   const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-  return new Date(date.setDate(diff));
+  // Wednesday is day 3, calculate days to go back to Wednesday
+  const daysToGoBack = (day - 3 + 7) % 7;
+  const result = new Date(date);
+  result.setDate(result.getDate() - daysToGoBack);
+  return new Date(result.setHours(0, 0, 0, 0));
 };
 
 export const getEndOfWeek = (date: Date): Date => {
   const startOfWeek = getStartOfWeek(new Date(date));
-  return new Date(startOfWeek.setDate(startOfWeek.getDate() + 6));
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  return new Date(endOfWeek.setHours(23, 59, 59, 999));
 };
 
 export const isDateInRange = (dateStr: string, startDate: Date, endDate: Date): boolean => {
