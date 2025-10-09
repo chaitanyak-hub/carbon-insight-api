@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
-import { filterAndGroupSites, filterAndGroupSitesByTeam, getDateRanges, groupByWeek, SiteRecord } from "@/utils/chartHelpers";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { filterAndGroupSites, filterAndGroupSitesByTeam, getDateRanges, groupByWeekAndAgent, SiteRecord } from "@/utils/chartHelpers";
 import { getTeamForAgent } from "@/utils/teamMapping";
 
 interface SiteChartsProps {
@@ -28,7 +28,14 @@ const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
     ? filterAndGroupSites(data, dateRanges.today.start, dateRanges.today.end)
     : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.today.start, dateRanges.today.end);
   
-  const weeklyTrendData = groupByWeek(data);
+  const weeklyTrendData = groupByWeekAndAgent(data, viewType === 'team' ? getTeamForAgent : undefined);
+  
+  // Get unique agents/teams for the weekly chart
+  const agentKeys = weeklyTrendData.length > 0 
+    ? Object.keys(weeklyTrendData[0]).filter(key => key !== 'week' && !key.includes('_contacts') && !key.includes('_interaction'))
+    : [];
+  
+  const colors = ['#FF5733', '#4CAF50', '#2196F3', '#FFC107', '#9C27B0', '#FF9800', '#00BCD4', '#E91E63'];
 
   const ChartCard = ({ 
     title, 
@@ -147,12 +154,14 @@ const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
       {/* Week on Week Statistics */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Week on Week Statistics</CardTitle>
+          <CardTitle className="text-2xl">
+            Week on Week Statistics by {viewType === 'individual' ? 'Agent' : 'Team'}
+          </CardTitle>
           <CardDescription>
-            {metricType === 'all' && `Trends - Sites: ${weeklyTrendData.reduce((sum, d) => sum + d.sites, 0)}, Contacts: ${weeklyTrendData.reduce((sum, d) => sum + d.uniqueContacts, 0)}, Interactions: ${weeklyTrendData.reduce((sum, d) => sum + d.customerInteraction, 0)}`}
-            {metricType === 'sites' && `Total Sites: ${weeklyTrendData.reduce((sum, d) => sum + d.sites, 0)}`}
-            {metricType === 'contacts' && `Total Unique Contacts: ${weeklyTrendData.reduce((sum, d) => sum + d.uniqueContacts, 0)}`}
-            {metricType === 'interaction' && `Total Customer Interactions: ${weeklyTrendData.reduce((sum, d) => sum + d.customerInteraction, 0)}`}
+            Weekly trends showing {metricType === 'all' ? 'all metrics' : 
+                                   metricType === 'sites' ? 'sites only' :
+                                   metricType === 'contacts' ? 'unique contacts only' :
+                                   'customer interactions only'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -161,8 +170,8 @@ const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
               No weekly data available
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={weeklyTrendData} margin={{ top: 30, right: 30, left: 20, bottom: 80 }}>
+            <ResponsiveContainer width="100%" height={500}>
+              <BarChart data={weeklyTrendData} margin={{ top: 30, right: 30, left: 20, bottom: 80 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
                   dataKey="week" 
@@ -178,18 +187,36 @@ const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px'
                   }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                          <p className="font-semibold text-foreground mb-2">{payload[0].payload.week}</p>
+                          {payload.map((entry: any, index: number) => (
+                            <p key={index} className="text-sm text-muted-foreground">
+                              {entry.name}: {entry.value}
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
                 <Legend />
-                {(metricType === 'all' || metricType === 'sites') && (
-                  <Line type="monotone" dataKey="sites" stroke="#FF5733" name="Sites" strokeWidth={2} />
-                )}
-                {(metricType === 'all' || metricType === 'contacts') && (
-                  <Line type="monotone" dataKey="uniqueContacts" stroke="#4CAF50" name="Unique Contacts" strokeWidth={2} />
-                )}
-                {(metricType === 'all' || metricType === 'interaction') && (
-                  <Line type="monotone" dataKey="customerInteraction" stroke="#2196F3" name="Customer Interaction" strokeWidth={2} />
-                )}
-              </LineChart>
+                {metricType === 'all' && agentKeys.map((agent, index) => (
+                  <Bar key={agent} dataKey={agent} stackId="a" fill={colors[index % colors.length]} />
+                ))}
+                {metricType === 'sites' && agentKeys.map((agent, index) => (
+                  <Bar key={agent} dataKey={agent} stackId="a" fill={colors[index % colors.length]} />
+                ))}
+                {metricType === 'contacts' && agentKeys.map((agent, index) => (
+                  <Bar key={`${agent}_contacts`} dataKey={`${agent}_contacts`} stackId="a" fill={colors[index % colors.length]} name={agent} />
+                ))}
+                {metricType === 'interaction' && agentKeys.map((agent, index) => (
+                  <Bar key={`${agent}_interaction`} dataKey={`${agent}_interaction`} stackId="a" fill={colors[index % colors.length]} name={agent} />
+                ))}
+              </BarChart>
             </ResponsiveContainer>
           )}
         </CardContent>

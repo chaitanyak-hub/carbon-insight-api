@@ -158,10 +158,10 @@ export const getWeekLabel = (date: Date): string => {
   return `${start.getDate()}/${start.getMonth() + 1} - ${end.getDate()}/${end.getMonth() + 1}`;
 };
 
-export const groupByWeek = (
+export const groupByWeekAndAgent = (
   records: SiteRecord[],
   teamMapping?: (email: string) => string | null
-): { week: string; sites: number; uniqueContacts: number; customerInteraction: number }[] => {
+): { week: string; [key: string]: any }[] => {
   // Filter for active sites with @edfenergy.com
   const filtered = records.filter(
     (record) =>
@@ -172,45 +172,53 @@ export const groupByWeek = (
       record.onboard_date
   );
 
-  // Group by week
+  // Group by week and agent/team
   const grouped = filtered.reduce((acc, record) => {
     const date = new Date(record.onboard_date!);
     const weekLabel = getWeekLabel(date);
+    const identifier = teamMapping 
+      ? teamMapping(record.agent_name!)
+      : formatAgentName(record.agent_name!);
+    
+    if (!identifier) return acc;
     
     if (!acc[weekLabel]) {
       acc[weekLabel] = { 
         weekStart: getStartOfWeek(new Date(date)),
-        sites: 0, 
-        contacts: new Set<string>(), 
-        customerInteraction: 0 
+        agents: {}
       };
     }
     
-    acc[weekLabel].sites += 1;
+    if (!acc[weekLabel].agents[identifier]) {
+      acc[weekLabel].agents[identifier] = {
+        sites: 0,
+        contacts: new Set<string>(),
+        customerInteraction: 0
+      };
+    }
+    
+    acc[weekLabel].agents[identifier].sites += 1;
     if (record.contact_email) {
-      acc[weekLabel].contacts.add(record.contact_email.toLowerCase());
+      acc[weekLabel].agents[identifier].contacts.add(record.contact_email.toLowerCase());
     }
     if (record.latest_contact_login) {
-      acc[weekLabel].customerInteraction += 1;
+      acc[weekLabel].agents[identifier].customerInteraction += 1;
     }
     
     return acc;
-  }, {} as Record<string, { weekStart: Date; sites: number; contacts: Set<string>; customerInteraction: number }>);
+  }, {} as Record<string, { weekStart: Date; agents: Record<string, { sites: number; contacts: Set<string>; customerInteraction: number }> }>);
 
-  // Convert to array and sort by week start date
+  // Convert to array format suitable for stacked bar charts
   return Object.entries(grouped)
-    .map(([week, data]) => ({
-      week,
-      sites: data.sites,
-      uniqueContacts: data.contacts.size,
-      customerInteraction: data.customerInteraction,
-      weekStart: data.weekStart
-    }))
+    .map(([week, data]) => {
+      const weekData: any = { week, weekStart: data.weekStart };
+      Object.entries(data.agents).forEach(([agent, stats]) => {
+        weekData[agent] = stats.sites;
+        weekData[`${agent}_contacts`] = stats.contacts.size;
+        weekData[`${agent}_interaction`] = stats.customerInteraction;
+      });
+      return weekData;
+    })
     .sort((a, b) => a.weekStart.getTime() - b.weekStart.getTime())
-    .map(({ week, sites, uniqueContacts, customerInteraction }) => ({
-      week,
-      sites,
-      uniqueContacts,
-      customerInteraction
-    }));
+    .map(({ weekStart, ...rest }) => rest);
 };
