@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Leaf, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [data, setData] = useState<any>(null);
@@ -15,25 +16,21 @@ const Index = () => {
         setLoading(true);
         setError(null);
         
-        // Using CORS proxy to bypass CORS restrictions
-        const targetUrl = 'https://api.thelabrador.co.uk/carbon/v3/site-activity?utmSource=edf&siteType=ndomestic';
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+        console.log('Calling backend function...');
         
-        const response = await fetch(proxyUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'e_api_key': 'U2FsdGVkX192qixrCGGatPyyOZ5JgJlfXxYWqyouY86AVVRAkktVgOiAwm93hdkGaX/DbFqO5qeqcE9+ael15g==',
-          },
-        });
+        const { data: result, error: functionError } = await supabase.functions.invoke(
+          'fetch-carbon-data'
+        );
 
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        if (functionError) {
+          console.error('Function error:', functionError);
+          throw new Error(functionError.message || 'Failed to fetch data from backend');
         }
 
-        const result = await response.json();
+        console.log('Data received:', result);
         setData(result);
       } catch (err) {
+        console.error('Error:', err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {
         setLoading(false);
