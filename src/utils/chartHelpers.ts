@@ -151,3 +151,66 @@ export const getDateRanges = () => {
     thisWeek: { start: weekStart, end: weekEnd },
   };
 };
+
+export const getWeekLabel = (date: Date): string => {
+  const start = getStartOfWeek(new Date(date));
+  const end = getEndOfWeek(new Date(date));
+  return `${start.getDate()}/${start.getMonth() + 1} - ${end.getDate()}/${end.getMonth() + 1}`;
+};
+
+export const groupByWeek = (
+  records: SiteRecord[],
+  teamMapping?: (email: string) => string | null
+): { week: string; sites: number; uniqueContacts: number; customerInteraction: number }[] => {
+  // Filter for active sites with @edfenergy.com
+  const filtered = records.filter(
+    (record) =>
+      record.site_status === 'ACTIVE' &&
+      record.agent_name &&
+      typeof record.agent_name === 'string' &&
+      record.agent_name.trim().includes('@edfenergy.com') &&
+      record.onboard_date
+  );
+
+  // Group by week
+  const grouped = filtered.reduce((acc, record) => {
+    const date = new Date(record.onboard_date!);
+    const weekLabel = getWeekLabel(date);
+    
+    if (!acc[weekLabel]) {
+      acc[weekLabel] = { 
+        weekStart: getStartOfWeek(new Date(date)),
+        sites: 0, 
+        contacts: new Set<string>(), 
+        customerInteraction: 0 
+      };
+    }
+    
+    acc[weekLabel].sites += 1;
+    if (record.contact_email) {
+      acc[weekLabel].contacts.add(record.contact_email.toLowerCase());
+    }
+    if (record.latest_contact_login) {
+      acc[weekLabel].customerInteraction += 1;
+    }
+    
+    return acc;
+  }, {} as Record<string, { weekStart: Date; sites: number; contacts: Set<string>; customerInteraction: number }>);
+
+  // Convert to array and sort by week start date
+  return Object.entries(grouped)
+    .map(([week, data]) => ({
+      week,
+      sites: data.sites,
+      uniqueContacts: data.contacts.size,
+      customerInteraction: data.customerInteraction,
+      weekStart: data.weekStart
+    }))
+    .sort((a, b) => a.weekStart.getTime() - b.weekStart.getTime())
+    .map(({ week, sites, uniqueContacts, customerInteraction }) => ({
+      week,
+      sites,
+      uniqueContacts,
+      customerInteraction
+    }));
+};

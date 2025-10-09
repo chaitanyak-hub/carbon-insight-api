@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { filterAndGroupSites, filterAndGroupSitesByTeam, getDateRanges, SiteRecord } from "@/utils/chartHelpers";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
+import { filterAndGroupSites, filterAndGroupSitesByTeam, getDateRanges, groupByWeek, SiteRecord } from "@/utils/chartHelpers";
 import { getTeamForAgent } from "@/utils/teamMapping";
 
 interface SiteChartsProps {
@@ -27,6 +27,8 @@ const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
   const todayData = viewType === 'individual'
     ? filterAndGroupSites(data, dateRanges.today.start, dateRanges.today.end)
     : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.today.start, dateRanges.today.end);
+  
+  const weeklyTrendData = groupByWeek(data);
 
   const ChartCard = ({ 
     title, 
@@ -141,6 +143,57 @@ const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
         data={totalData}
         color="#FF5733"
       />
+      
+      {/* Week on Week Statistics */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Week on Week Statistics</CardTitle>
+          <CardDescription>
+            {metricType === 'all' && `Trends - Sites: ${weeklyTrendData.reduce((sum, d) => sum + d.sites, 0)}, Contacts: ${weeklyTrendData.reduce((sum, d) => sum + d.uniqueContacts, 0)}, Interactions: ${weeklyTrendData.reduce((sum, d) => sum + d.customerInteraction, 0)}`}
+            {metricType === 'sites' && `Total Sites: ${weeklyTrendData.reduce((sum, d) => sum + d.sites, 0)}`}
+            {metricType === 'contacts' && `Total Unique Contacts: ${weeklyTrendData.reduce((sum, d) => sum + d.uniqueContacts, 0)}`}
+            {metricType === 'interaction' && `Total Customer Interactions: ${weeklyTrendData.reduce((sum, d) => sum + d.customerInteraction, 0)}`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {weeklyTrendData.length === 0 ? (
+            <div className="flex items-center justify-center h-64 text-muted-foreground">
+              No weekly data available
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={weeklyTrendData} margin={{ top: 30, right: 30, left: 20, bottom: 80 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis 
+                  dataKey="week" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                />
+                <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Legend />
+                {(metricType === 'all' || metricType === 'sites') && (
+                  <Line type="monotone" dataKey="sites" stroke="#FF5733" name="Sites" strokeWidth={2} />
+                )}
+                {(metricType === 'all' || metricType === 'contacts') && (
+                  <Line type="monotone" dataKey="uniqueContacts" stroke="#4CAF50" name="Unique Contacts" strokeWidth={2} />
+                )}
+                {(metricType === 'all' || metricType === 'interaction') && (
+                  <Line type="monotone" dataKey="customerInteraction" stroke="#2196F3" name="Customer Interaction" strokeWidth={2} />
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
