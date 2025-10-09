@@ -205,16 +205,16 @@ const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
                 />
                 <Legend />
                 {metricType === 'all' && agentKeys.map((agent, index) => (
-                  <Bar key={agent} dataKey={agent} stackId="a" fill={colors[index % colors.length]} />
+                  <Bar key={agent} dataKey={agent} fill={colors[index % colors.length]} />
                 ))}
                 {metricType === 'sites' && agentKeys.map((agent, index) => (
-                  <Bar key={agent} dataKey={agent} stackId="a" fill={colors[index % colors.length]} />
+                  <Bar key={agent} dataKey={agent} fill={colors[index % colors.length]} />
                 ))}
                 {metricType === 'contacts' && agentKeys.map((agent, index) => (
-                  <Bar key={`${agent}_contacts`} dataKey={`${agent}_contacts`} stackId="a" fill={colors[index % colors.length]} name={agent} />
+                  <Bar key={`${agent}_contacts`} dataKey={`${agent}_contacts`} fill={colors[index % colors.length]} name={agent} />
                 ))}
                 {metricType === 'interaction' && agentKeys.map((agent, index) => (
-                  <Bar key={`${agent}_interaction`} dataKey={`${agent}_interaction`} stackId="a" fill={colors[index % colors.length]} name={agent} />
+                  <Bar key={`${agent}_interaction`} dataKey={`${agent}_interaction`} fill={colors[index % colors.length]} name={agent} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
