@@ -4,9 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Leaf, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import SiteCharts from "@/components/SiteCharts";
+import { SiteRecord } from "@/utils/chartHelpers";
 
 const Index = () => {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<SiteRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +30,10 @@ const Index = () => {
         }
 
         console.log('Data received:', result);
-        setData(result);
+        
+        // Handle both array and object responses
+        const records = Array.isArray(result) ? result : (result?.records || result?.data || []);
+        setData(records);
       } catch (err) {
         console.error('Error:', err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -75,57 +80,43 @@ const Index = () => {
             </Alert>
           )}
 
-          {/* Data Display */}
-          {data && !loading && (
+          {/* Charts Display */}
+          {data.length > 0 && !loading && (
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle>API Response</CardTitle>
+                  <CardTitle>Data Summary</CardTitle>
                   <CardDescription>
-                    Data from Labrador Carbon API
+                    Active sites by EDF Energy agents
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-primary/10">
-                        Success
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        Status: 200 OK
-                      </span>
-                    </div>
-                    
-                    <div className="rounded-lg bg-muted p-4">
-                      <pre className="text-sm overflow-x-auto">
-                        {JSON.stringify(data, null, 2)}
-                      </pre>
-                    </div>
+                  <div className="flex items-center gap-4">
+                    <Badge variant="outline" className="bg-primary/10">
+                      {data.length} Total Records
+                    </Badge>
+                    <Badge variant="outline" className="bg-accent/10">
+                      {data.filter(r => r.site_status === 'ACTIVE').length} Active Sites
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Additional Info Card */}
+              <SiteCharts data={data} />
+
+              {/* Raw Data Card (Collapsible) */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Request Details</CardTitle>
+                  <CardTitle>Raw API Response</CardTitle>
+                  <CardDescription>
+                    Complete data from Labrador Carbon API
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid gap-2">
-                    <div className="flex justify-between py-2 border-b border-border">
-                      <span className="font-medium">Endpoint:</span>
-                      <span className="text-sm text-muted-foreground">
-                        /carbon/v3/site-activity
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-border">
-                      <span className="font-medium">UTM Source:</span>
-                      <span className="text-sm text-muted-foreground">edf</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="font-medium">Site Type:</span>
-                      <span className="text-sm text-muted-foreground">ndomestic</span>
-                    </div>
+                <CardContent>
+                  <div className="rounded-lg bg-muted p-4 max-h-96 overflow-auto">
+                    <pre className="text-xs">
+                      {JSON.stringify(data, null, 2)}
+                    </pre>
                   </div>
                 </CardContent>
               </Card>
