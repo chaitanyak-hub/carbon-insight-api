@@ -24,76 +24,76 @@ const SiteCharts = ({ data }: SiteChartsProps) => {
     description: string; 
     data: { name: string; sites: number }[]; 
     color: string;
-  }) => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {title}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {data.length === 0 ? (
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
-            No data available for this period
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="name" 
-                angle={-45} 
-                textAnchor="end" 
-                height={100}
-                tick={{ fill: 'hsl(var(--foreground))' }}
-              />
-              <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-              />
-              <Bar dataKey="sites" fill={color} radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </CardContent>
-    </Card>
-  );
+  }) => {
+    const totalSites = data.reduce((sum, item) => sum + item.sites, 0);
+    
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">
+            {title} (Total: {totalSites})
+          </CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {data.length === 0 ? (
+            <div className="flex items-center justify-center h-64 text-muted-foreground">
+              No data available for this period
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={data} margin={{ top: 30, right: 30, left: 20, bottom: 80 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis 
+                  dataKey="name" 
+                  angle={-45} 
+                  textAnchor="end" 
+                  height={100}
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                />
+                <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Bar dataKey="sites" fill={color} radius={[8, 8, 0, 0]} label={{ position: 'top', fill: 'hsl(var(--foreground))' }} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        <ChartCard 
-          title="Total Active Sites" 
-          description="All time sites by agent"
-          data={totalData}
-          color="hsl(var(--primary))"
-        />
-        <ChartCard 
-          title="This Week" 
-          description="Monday to Sunday"
-          data={weekData}
-          color="hsl(var(--accent))"
-        />
-      </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        <ChartCard 
-          title="Yesterday" 
-          description="Sites added yesterday"
-          data={yesterdayData}
-          color="hsl(142 60% 45%)"
-        />
-        <ChartCard 
-          title="Today" 
-          description="Sites added today"
-          data={todayData}
-          color="hsl(142 76% 36%)"
-        />
-      </div>
+      <ChartCard 
+        title="Today" 
+        description="Sites added today"
+        data={todayData}
+        color="#FF5733"
+      />
+      <ChartCard 
+        title="Yesterday" 
+        description="Sites added yesterday"
+        data={yesterdayData}
+        color="#FF5733"
+      />
+      <ChartCard 
+        title="This Week" 
+        description="Monday to Sunday"
+        data={weekData}
+        color="#FF5733"
+      />
+      <ChartCard 
+        title="All Active Sites by Agent" 
+        description="Total number of active sites added per agent (all dates)"
+        data={totalData}
+        color="#FF5733"
+      />
     </div>
   );
 };

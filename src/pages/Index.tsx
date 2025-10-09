@@ -97,9 +97,6 @@ const Index = () => {
                     <Badge variant="outline" className="bg-primary/10">
                       {data.length} Total Records
                     </Badge>
-                    <Badge variant="outline" className="bg-accent/10">
-                      {data.filter(r => r.site_status === 'ACTIVE').length} Active Sites
-                    </Badge>
                   </div>
                 </CardContent>
               </Card>
