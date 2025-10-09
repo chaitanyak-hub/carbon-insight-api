@@ -127,6 +127,7 @@ const SiteCharts = ({ data, viewType, metricType, dateFrom, dateTo }: SiteCharts
                     fill="#2196F3" 
                     radius={[8, 8, 0, 0]} 
                     label={(props: any) => {
+                      if (!props.payload) return null;
                       const percentage = props.payload.uniqueContacts > 0 
                         ? Math.round((props.payload.customerInteraction / props.payload.uniqueContacts) * 100)
                         : 0;
