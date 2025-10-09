@@ -40,7 +40,7 @@ export const filterAndGroupSites = (
   records: SiteRecord[],
   startDate?: Date,
   endDate?: Date
-): { name: string; sites: number; uniqueContacts: number }[] => {
+): { name: string; sites: number; uniqueContacts: number; customerInteraction: number }[] => {
   // Filter for active sites with @edfenergy.com
   let filtered = records.filter(
     (record) =>
@@ -57,25 +57,29 @@ export const filterAndGroupSites = (
     );
   }
 
-  // Group by agent and count sites + unique contacts
+  // Group by agent and count sites + unique contacts + customer interaction
   const grouped = filtered.reduce((acc, record) => {
     const agentName = formatAgentName(record.agent_name!);
     if (!acc[agentName]) {
-      acc[agentName] = { sites: 0, contacts: new Set<string>() };
+      acc[agentName] = { sites: 0, contacts: new Set<string>(), customerInteraction: 0 };
     }
     acc[agentName].sites += 1;
     if (record.contact_email) {
       acc[agentName].contacts.add(record.contact_email.toLowerCase());
     }
+    if (record.latest_contact_login) {
+      acc[agentName].customerInteraction += 1;
+    }
     return acc;
-  }, {} as Record<string, { sites: number; contacts: Set<string> }>);
+  }, {} as Record<string, { sites: number; contacts: Set<string>; customerInteraction: number }>);
 
   // Convert to array and sort by sites count
   return Object.entries(grouped)
     .map(([name, data]) => ({ 
       name, 
       sites: data.sites,
-      uniqueContacts: data.contacts.size
+      uniqueContacts: data.contacts.size,
+      customerInteraction: data.customerInteraction
     }))
     .sort((a, b) => b.sites - a.sites);
 };
@@ -85,7 +89,7 @@ export const filterAndGroupSitesByTeam = (
   teamMapping: (email: string) => string | null,
   startDate?: Date,
   endDate?: Date
-): { name: string; sites: number; uniqueContacts: number }[] => {
+): { name: string; sites: number; uniqueContacts: number; customerInteraction: number }[] => {
   // Filter for active sites with @edfenergy.com
   let filtered = records.filter(
     (record) =>
@@ -102,27 +106,31 @@ export const filterAndGroupSitesByTeam = (
     );
   }
 
-  // Group by team and count sites + unique contacts
+  // Group by team and count sites + unique contacts + customer interaction
   const grouped = filtered.reduce((acc, record) => {
     const teamName = teamMapping(record.agent_name!);
     if (teamName) {
       if (!acc[teamName]) {
-        acc[teamName] = { sites: 0, contacts: new Set<string>() };
+        acc[teamName] = { sites: 0, contacts: new Set<string>(), customerInteraction: 0 };
       }
       acc[teamName].sites += 1;
       if (record.contact_email) {
         acc[teamName].contacts.add(record.contact_email.toLowerCase());
       }
+      if (record.latest_contact_login) {
+        acc[teamName].customerInteraction += 1;
+      }
     }
     return acc;
-  }, {} as Record<string, { sites: number; contacts: Set<string> }>);
+  }, {} as Record<string, { sites: number; contacts: Set<string>; customerInteraction: number }>);
 
   // Convert to array and sort by sites count
   return Object.entries(grouped)
     .map(([name, data]) => ({ 
       name, 
       sites: data.sites,
-      uniqueContacts: data.contacts.size
+      uniqueContacts: data.contacts.size,
+      customerInteraction: data.customerInteraction
     }))
     .sort((a, b) => b.sites - a.sites);
 };

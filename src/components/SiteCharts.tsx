@@ -6,9 +6,10 @@ import { getTeamForAgent } from "@/utils/teamMapping";
 interface SiteChartsProps {
   data: SiteRecord[];
   viewType: 'individual' | 'team';
+  metricType: 'all' | 'sites' | 'contacts' | 'interaction';
 }
 
-const SiteCharts = ({ data, viewType }: SiteChartsProps) => {
+const SiteCharts = ({ data, viewType, metricType }: SiteChartsProps) => {
   const dateRanges = getDateRanges();
 
   const totalData = viewType === 'individual' 
@@ -35,17 +36,21 @@ const SiteCharts = ({ data, viewType }: SiteChartsProps) => {
   }: { 
     title: string; 
     description: string; 
-    data: { name: string; sites: number; uniqueContacts: number }[]; 
+    data: { name: string; sites: number; uniqueContacts: number; customerInteraction: number }[]; 
     color: string;
   }) => {
     const totalSites = data.reduce((sum, item) => sum + item.sites, 0);
     const totalContacts = data.reduce((sum, item) => sum + item.uniqueContacts, 0);
+    const totalInteraction = data.reduce((sum, item) => sum + item.customerInteraction, 0);
     
     return (
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">
-            {title} (Sites: {totalSites}, Unique Contacts: {totalContacts})
+            {title} ({metricType === 'all' ? `Sites: ${totalSites}, Contacts: ${totalContacts}, Interactions: ${totalInteraction}` : 
+                     metricType === 'sites' ? `Sites: ${totalSites}` :
+                     metricType === 'contacts' ? `Unique Contacts: ${totalContacts}` :
+                     `Customer Interactions: ${totalInteraction}`})
           </CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
@@ -78,16 +83,30 @@ const SiteCharts = ({ data, viewType }: SiteChartsProps) => {
                       return (
                         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
                           <p className="font-semibold text-foreground mb-2">{data.name}</p>
-                          <p className="text-sm text-muted-foreground">Sites: {data.sites}</p>
-                          <p className="text-sm text-muted-foreground">Unique Contacts: {data.uniqueContacts}</p>
+                          {(metricType === 'all' || metricType === 'sites') && (
+                            <p className="text-sm text-muted-foreground">Sites: {data.sites}</p>
+                          )}
+                          {(metricType === 'all' || metricType === 'contacts') && (
+                            <p className="text-sm text-muted-foreground">Unique Contacts: {data.uniqueContacts}</p>
+                          )}
+                          {(metricType === 'all' || metricType === 'interaction') && (
+                            <p className="text-sm text-muted-foreground">Customer Interactions: {data.customerInteraction}</p>
+                          )}
                         </div>
                       );
                     }
                     return null;
                   }}
                 />
-                <Bar dataKey="sites" fill={color} radius={[8, 8, 0, 0]} label={{ position: 'top', fill: 'hsl(var(--foreground))' }} />
-                <Bar dataKey="uniqueContacts" fill="#4CAF50" radius={[8, 8, 0, 0]} label={{ position: 'top', fill: 'hsl(var(--foreground))' }} />
+                {(metricType === 'all' || metricType === 'sites') && (
+                  <Bar dataKey="sites" fill={color} radius={[8, 8, 0, 0]} label={{ position: 'top', fill: 'hsl(var(--foreground))' }} />
+                )}
+                {(metricType === 'all' || metricType === 'contacts') && (
+                  <Bar dataKey="uniqueContacts" fill="#4CAF50" radius={[8, 8, 0, 0]} label={{ position: 'top', fill: 'hsl(var(--foreground))' }} />
+                )}
+                {(metricType === 'all' || metricType === 'interaction') && (
+                  <Bar dataKey="customerInteraction" fill="#2196F3" radius={[8, 8, 0, 0]} label={{ position: 'top', fill: 'hsl(var(--foreground))' }} />
+                )}
               </BarChart>
             </ResponsiveContainer>
           )}

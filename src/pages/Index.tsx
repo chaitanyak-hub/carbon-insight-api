@@ -7,12 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import SiteCharts from "@/components/SiteCharts";
 import { SiteRecord } from "@/utils/chartHelpers";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Index = () => {
   const [data, setData] = useState<SiteRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewType, setViewType] = useState<'individual' | 'team'>('individual');
+  const [metricType, setMetricType] = useState<'all' | 'sites' | 'contacts' | 'interaction'>('all');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -94,7 +96,22 @@ const Index = () => {
                     Active sites by EDF Energy agents
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Display Metrics</label>
+                    <Select value={metricType} onValueChange={(value: any) => setMetricType(value)}>
+                      <SelectTrigger className="w-full sm:w-64">
+                        <SelectValue placeholder="Select metrics" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Stats</SelectItem>
+                        <SelectItem value="sites">Only Sites</SelectItem>
+                        <SelectItem value="contacts">Only Unique Contacts</SelectItem>
+                        <SelectItem value="interaction">Only Customer Interaction</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
                   <Tabs value={viewType} onValueChange={(v) => setViewType(v as 'individual' | 'team')}>
                     <TabsList className="grid w-full max-w-md grid-cols-2">
                       <TabsTrigger value="individual">Individual Agents</TabsTrigger>
@@ -104,7 +121,7 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <SiteCharts data={data} viewType={viewType} />
+              <SiteCharts data={data} viewType={viewType} metricType={metricType} />
 
               {/* Raw Data Card (Collapsible) */}
               <Card>
