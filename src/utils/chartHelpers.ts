@@ -1,7 +1,7 @@
 export interface SiteRecord {
   agent_name?: string;
   site_status?: string;
-  created_at?: string;
+  onboard_date?: string;
   [key: string]: any;
 }
 
@@ -53,7 +53,7 @@ export const filterAndGroupSites = (
   // Apply date filter if provided
   if (startDate && endDate && filtered.length > 0) {
     filtered = filtered.filter((record) =>
-      record.created_at ? isDateInRange(record.created_at, startDate, endDate) : false
+      record.onboard_date ? isDateInRange(record.onboard_date, startDate, endDate) : false
     );
   }
 

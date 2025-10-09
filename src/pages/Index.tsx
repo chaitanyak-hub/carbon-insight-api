@@ -32,7 +32,9 @@ const Index = () => {
         console.log('Data received:', result);
         
         // Handle both array and object responses
-        const records = Array.isArray(result) ? result : (result?.records || result?.data || []);
+        const records = Array.isArray(result) 
+          ? result 
+          : (result?.data?.sites || result?.sites || result?.records || result?.data || []);
         setData(records);
       } catch (err) {
         console.error('Error:', err);
