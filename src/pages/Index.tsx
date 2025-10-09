@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Leaf, AlertCircle, Download, CalendarIcon } from "lucide-react";
+import { Loader2, Leaf, AlertCircle, CalendarIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import SiteCharts from "@/components/SiteCharts";
@@ -58,27 +58,6 @@ const Index = () => {
     fetchData();
   }, []);
 
-  const downloadCSV = () => {
-    if (data.length === 0) return;
-
-    const headers = ["Agent", "Site ID", "Contact Email", "Latest Contact Login"];
-    const csvContent = [
-      headers.join(","),
-      ...data.map(record => 
-        `"${record.agent_name}","${record.site_id}","${record.contact_email || ''}","${record.latest_contact_login || ''}"`
-      )
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `site_activity_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,18 +99,10 @@ const Index = () => {
             <>
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Data Summary</CardTitle>
-                      <CardDescription>
-                        Active sites by EDF Energy agents
-                      </CardDescription>
-                    </div>
-                    <Button onClick={downloadCSV} variant="outline" size="sm">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download CSV
-                    </Button>
-                  </div>
+                  <CardTitle>Data Summary</CardTitle>
+                  <CardDescription>
+                    Active sites by EDF Energy agents
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
