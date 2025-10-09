@@ -35,16 +35,17 @@ const SiteCharts = ({ data, viewType }: SiteChartsProps) => {
   }: { 
     title: string; 
     description: string; 
-    data: { name: string; sites: number }[]; 
+    data: { name: string; sites: number; uniqueContacts: number }[]; 
     color: string;
   }) => {
     const totalSites = data.reduce((sum, item) => sum + item.sites, 0);
+    const totalContacts = data.reduce((sum, item) => sum + item.uniqueContacts, 0);
     
     return (
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">
-            {title} (Total: {totalSites})
+            {title} (Sites: {totalSites}, Unique Contacts: {totalContacts})
           </CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
@@ -71,8 +72,22 @@ const SiteCharts = ({ data, viewType }: SiteChartsProps) => {
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px'
                   }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                          <p className="font-semibold text-foreground mb-2">{data.name}</p>
+                          <p className="text-sm text-muted-foreground">Sites: {data.sites}</p>
+                          <p className="text-sm text-muted-foreground">Unique Contacts: {data.uniqueContacts}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
                 <Bar dataKey="sites" fill={color} radius={[8, 8, 0, 0]} label={{ position: 'top', fill: 'hsl(var(--foreground))' }} />
+                <Bar dataKey="uniqueContacts" fill="#4CAF50" radius={[8, 8, 0, 0]} label={{ position: 'top', fill: 'hsl(var(--foreground))' }} />
               </BarChart>
             </ResponsiveContainer>
           )}

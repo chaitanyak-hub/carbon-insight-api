@@ -40,7 +40,7 @@ export const filterAndGroupSites = (
   records: SiteRecord[],
   startDate?: Date,
   endDate?: Date
-): { name: string; sites: number }[] => {
+): { name: string; sites: number; uniqueContacts: number }[] => {
   // Filter for active sites with @edfenergy.com
   let filtered = records.filter(
     (record) =>
@@ -57,16 +57,26 @@ export const filterAndGroupSites = (
     );
   }
 
-  // Group by agent and count
+  // Group by agent and count sites + unique contacts
   const grouped = filtered.reduce((acc, record) => {
     const agentName = formatAgentName(record.agent_name!);
-    acc[agentName] = (acc[agentName] || 0) + 1;
+    if (!acc[agentName]) {
+      acc[agentName] = { sites: 0, contacts: new Set<string>() };
+    }
+    acc[agentName].sites += 1;
+    if (record.contact_email) {
+      acc[agentName].contacts.add(record.contact_email.toLowerCase());
+    }
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, { sites: number; contacts: Set<string> }>);
 
-  // Convert to array and sort by count
+  // Convert to array and sort by sites count
   return Object.entries(grouped)
-    .map(([name, sites]) => ({ name, sites }))
+    .map(([name, data]) => ({ 
+      name, 
+      sites: data.sites,
+      uniqueContacts: data.contacts.size
+    }))
     .sort((a, b) => b.sites - a.sites);
 };
 
@@ -75,7 +85,7 @@ export const filterAndGroupSitesByTeam = (
   teamMapping: (email: string) => string | null,
   startDate?: Date,
   endDate?: Date
-): { name: string; sites: number }[] => {
+): { name: string; sites: number; uniqueContacts: number }[] => {
   // Filter for active sites with @edfenergy.com
   let filtered = records.filter(
     (record) =>
@@ -92,18 +102,28 @@ export const filterAndGroupSitesByTeam = (
     );
   }
 
-  // Group by team and count
+  // Group by team and count sites + unique contacts
   const grouped = filtered.reduce((acc, record) => {
     const teamName = teamMapping(record.agent_name!);
     if (teamName) {
-      acc[teamName] = (acc[teamName] || 0) + 1;
+      if (!acc[teamName]) {
+        acc[teamName] = { sites: 0, contacts: new Set<string>() };
+      }
+      acc[teamName].sites += 1;
+      if (record.contact_email) {
+        acc[teamName].contacts.add(record.contact_email.toLowerCase());
+      }
     }
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, { sites: number; contacts: Set<string> }>);
 
-  // Convert to array and sort by count
+  // Convert to array and sort by sites count
   return Object.entries(grouped)
-    .map(([name, sites]) => ({ name, sites }))
+    .map(([name, data]) => ({ 
+      name, 
+      sites: data.sites,
+      uniqueContacts: data.contacts.size
+    }))
     .sort((a, b) => b.sites - a.sites);
 };
 
