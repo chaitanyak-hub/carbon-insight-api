@@ -122,7 +122,27 @@ const SiteCharts = ({ data, viewType, metricType, dateFrom, dateTo }: SiteCharts
                   <Bar dataKey="uniqueContacts" fill="#4CAF50" radius={[8, 8, 0, 0]} label={{ position: 'top', fill: 'hsl(var(--foreground))' }} />
                 )}
                 {(metricType === 'all' || metricType === 'interaction') && (
-                  <Bar dataKey="customerInteraction" fill="#2196F3" radius={[8, 8, 0, 0]} label={{ position: 'top', fill: 'hsl(var(--foreground))' }} />
+                  <Bar 
+                    dataKey="customerInteraction" 
+                    fill="#2196F3" 
+                    radius={[8, 8, 0, 0]} 
+                    label={(props: any) => {
+                      const percentage = props.payload.uniqueContacts > 0 
+                        ? Math.round((props.payload.customerInteraction / props.payload.uniqueContacts) * 100)
+                        : 0;
+                      return (
+                        <text 
+                          x={props.x + props.width / 2} 
+                          y={props.y - 5} 
+                          fill="hsl(var(--foreground))" 
+                          textAnchor="middle"
+                          fontSize={12}
+                        >
+                          {`${props.value} (${percentage}%)`}
+                        </text>
+                      );
+                    }}
+                  />
                 )}
               </BarChart>
             </ResponsiveContainer>
