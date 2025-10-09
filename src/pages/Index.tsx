@@ -92,13 +92,6 @@ const Index = () => {
                     Active sites by EDF Energy agents
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4">
-                    <Badge variant="outline" className="bg-primary/10">
-                      {data.length} Total Records
-                    </Badge>
-                  </div>
-                </CardContent>
               </Card>
 
               <SiteCharts data={data} />
