@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Leaf, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Leaf, AlertCircle, Download } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import SiteCharts from "@/components/SiteCharts";
@@ -51,6 +52,28 @@ const Index = () => {
     fetchData();
   }, []);
 
+  const downloadCSV = () => {
+    if (data.length === 0) return;
+
+    const headers = ["Agent", "Site ID", "Contact Email", "Latest Contact Login"];
+    const csvContent = [
+      headers.join(","),
+      ...data.map(record => 
+        `"${record.agent_name}","${record.site_id}","${record.contact_email || ''}","${record.latest_contact_login || ''}"`
+      )
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `site_activity_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12">
@@ -91,10 +114,18 @@ const Index = () => {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle>Data Summary</CardTitle>
-                  <CardDescription>
-                    Active sites by EDF Energy agents
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Data Summary</CardTitle>
+                      <CardDescription>
+                        Active sites by EDF Energy agents
+                      </CardDescription>
+                    </div>
+                    <Button onClick={downloadCSV} variant="outline" size="sm">
+                      <Download className="w-4 h-4 mr-2" />
+                      Download CSV
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
@@ -122,23 +153,6 @@ const Index = () => {
               </Card>
 
               <SiteCharts data={data} viewType={viewType} metricType={metricType} />
-
-              {/* Raw Data Card (Collapsible) */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Raw API Response</CardTitle>
-                  <CardDescription>
-                    Complete data from Labrador Carbon API
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-lg bg-muted p-4 max-h-96 overflow-auto">
-                    <pre className="text-xs">
-                      {JSON.stringify(data, null, 2)}
-                    </pre>
-                  </div>
-                </CardContent>
-              </Card>
             </>
           )}
         </div>
