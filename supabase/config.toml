@@ -1,1 +1,4 @@
 project_id = "dllqymcdrvkmgjzhhwdi"
+
+[functions.fetch-carbon-data]
+verify_jwt = false
