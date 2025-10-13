@@ -31,15 +31,22 @@ const Index = () => {
         
         console.log('Calling backend function...');
         
-        const { data: result, error: functionError } = await supabase.functions.invoke(
-          'fetch-carbon-data'
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-carbon-data`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          }
         );
 
-        if (functionError) {
-          console.error('Function error:', functionError);
-          throw new Error(functionError.message || 'Failed to fetch data from backend');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.statusText}`);
         }
 
+        const result = await response.json();
         console.log('Data received:', result);
         
         // Handle both array and object responses
