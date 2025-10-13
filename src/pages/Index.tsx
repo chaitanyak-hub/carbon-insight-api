@@ -31,19 +31,24 @@ const Index = () => {
         
         console.log('Calling backend function...');
         
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-carbon-data`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            },
-          }
-        );
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-carbon-data`;
+        console.log('Fetching from URL:', url);
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+        });
+
+        console.log('Response status:', response.status, response.statusText);
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch data: ${response.statusText}`);
+          const errorText = await response.text();
+          console.error('Response error:', errorText);
+          throw new Error(`Failed to fetch data: ${response.status} ${response.statusText} - ${errorText}`);
         }
 
         const result = await response.json();
@@ -55,7 +60,7 @@ const Index = () => {
           : (result?.data?.sites || result?.sites || result?.records || result?.data || []);
         setData(records);
       } catch (err) {
-        console.error('Error:', err);
+        console.error('Error details:', err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {
         setLoading(false);
