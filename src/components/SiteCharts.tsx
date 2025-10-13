@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { filterAndGroupSites, filterAndGroupSitesByTeam, getDateRanges, groupByWeekAndAgent, SiteRecord } from "@/utils/chartHelpers";
 import { getTeamForAgent } from "@/utils/teamMapping";
+import WeeklyStatsTable from "./WeeklyStatsTable";
 
 interface SiteChartsProps {
   data: SiteRecord[];
@@ -250,6 +251,9 @@ const SiteCharts = ({ data, viewType, metricType, dateFrom, dateTo }: SiteCharts
           )}
         </CardContent>
       </Card>
+
+      {/* Weekly Statistics Table */}
+      <WeeklyStatsTable data={data} viewType={viewType} />
     </div>
   );
 };
