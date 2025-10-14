@@ -9,38 +9,64 @@ interface WeeklyStatsTableProps {
 }
 
 const WeeklyStatsTable = ({ data, viewType }: WeeklyStatsTableProps) => {
-  const weeklyData = groupByWeekAndAgent(data, viewType === 'team' ? getTeamForAgent : undefined);
-  
-  // Transform data for table format
+  // Transform data for daily table format
   const tableData: Array<{
-    week: string;
+    date: string;
     agent: string;
     sites: number;
     uniqueCustomers: number;
     interaction: number;
   }> = [];
 
-  weeklyData.forEach((weekData) => {
-    const week = weekData.week;
-    const agents = Object.keys(weekData).filter(key => 
-      key !== 'week' && !key.includes('_contacts') && !key.includes('_interaction')
-    );
+  // Group data by date and agent
+  const dailyGroups = new Map<string, Map<string, { sites: number; contacts: Set<string>; interactions: number }>>();
 
-    agents.forEach(agent => {
+  data.forEach(record => {
+    if (record.site_status !== 'ACTIVE' || !record.onboard_date) return;
+    
+    const date = new Date(record.onboard_date).toISOString().split('T')[0];
+    const agentKey = viewType === 'team' 
+      ? getTeamForAgent(record.agent_name || '') || 'Unknown'
+      : formatAgentName(record.agent_name || '');
+
+    if (!dailyGroups.has(date)) {
+      dailyGroups.set(date, new Map());
+    }
+    
+    const dateGroup = dailyGroups.get(date)!;
+    if (!dateGroup.has(agentKey)) {
+      dateGroup.set(agentKey, { sites: 0, contacts: new Set(), interactions: 0 });
+    }
+
+    const agentData = dateGroup.get(agentKey)!;
+    agentData.sites++;
+    
+    if (record.contact_email) {
+      agentData.contacts.add(record.contact_email);
+    }
+    
+    if (record.logged_in_contacts && record.logged_in_contacts > 0) {
+      agentData.interactions++;
+    }
+  });
+
+  // Convert to array format
+  dailyGroups.forEach((agents, date) => {
+    agents.forEach((data, agent) => {
       tableData.push({
-        week,
+        date,
         agent,
-        sites: weekData[agent] || 0,
-        uniqueCustomers: weekData[`${agent}_contacts`] || 0,
-        interaction: weekData[`${agent}_interaction`] || 0,
+        sites: data.sites,
+        uniqueCustomers: data.contacts.size,
+        interaction: data.interactions,
       });
     });
   });
 
-  // Sort by week (descending) and then by agent
+  // Sort by date (descending) and then by agent
   tableData.sort((a, b) => {
-    if (a.week !== b.week) {
-      return b.week.localeCompare(a.week);
+    if (a.date !== b.date) {
+      return b.date.localeCompare(a.date);
     }
     return a.agent.localeCompare(b.agent);
   });
@@ -49,10 +75,10 @@ const WeeklyStatsTable = ({ data, viewType }: WeeklyStatsTableProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="text-2xl">
-          Weekly Statistics by {viewType === 'individual' ? 'Agent' : 'Team'}
+          Daily Statistics by {viewType === 'individual' ? 'Agent' : 'Team'}
         </CardTitle>
         <CardDescription>
-          Week-by-week breakdown (Wednesday to Tuesday) showing sites added, unique customers, and interactions
+          Day-by-day breakdown showing sites added, unique customers, and interactions
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -60,7 +86,7 @@ const WeeklyStatsTable = ({ data, viewType }: WeeklyStatsTableProps) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="font-bold">Week (Wed-Tue)</TableHead>
+                <TableHead className="font-bold">Date</TableHead>
                 <TableHead className="font-bold">{viewType === 'individual' ? 'Agent' : 'Team'}</TableHead>
                 <TableHead className="text-right font-bold">Sites Added</TableHead>
                 <TableHead className="text-right font-bold">Unique Customers</TableHead>
@@ -82,8 +108,8 @@ const WeeklyStatsTable = ({ data, viewType }: WeeklyStatsTableProps) => {
                     : 0;
                   
                   return (
-                    <TableRow key={`${row.week}-${row.agent}-${index}`}>
-                      <TableCell className="font-medium">{row.week}</TableCell>
+                    <TableRow key={`${row.date}-${row.agent}-${index}`}>
+                      <TableCell className="font-medium">{row.date}</TableCell>
                       <TableCell>{row.agent}</TableCell>
                       <TableCell className="text-right">{row.sites}</TableCell>
                       <TableCell className="text-right">{row.uniqueCustomers}</TableCell>
