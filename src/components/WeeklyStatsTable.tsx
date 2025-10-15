@@ -22,7 +22,11 @@ const WeeklyStatsTable = ({ data, viewType }: WeeklyStatsTableProps) => {
   const dailyGroups = new Map<string, Map<string, { sites: number; contacts: Set<string>; interactions: number }>>();
 
   data.forEach(record => {
-    if (record.site_status !== 'ACTIVE' || !record.onboard_date) return;
+    if (!record.onboard_date) return;
+    
+    // Include inactive sites only for Lauren Wise, otherwise filter to ACTIVE only
+    const isLaurenWise = record.agent_name?.toLowerCase().includes('lauren.wise');
+    if (record.site_status !== 'ACTIVE' && !isLaurenWise) return;
     
     const date = new Date(record.onboard_date).toISOString().split('T')[0];
     const agentKey = viewType === 'team' 
