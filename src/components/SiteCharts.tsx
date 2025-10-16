@@ -25,6 +25,10 @@ const SiteCharts = ({ data, viewType, metricType, dateFrom, dateTo }: SiteCharts
     ? filterAndGroupSites(data, dateRanges.thisWeek.start, dateRanges.thisWeek.end)
     : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.thisWeek.start, dateRanges.thisWeek.end);
     
+  const monthData = viewType === 'individual'
+    ? filterAndGroupSites(data, dateRanges.thisMonth.start, dateRanges.thisMonth.end)
+    : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.thisMonth.start, dateRanges.thisMonth.end);
+    
   const yesterdayData = viewType === 'individual'
     ? filterAndGroupSites(data, dateRanges.yesterday.start, dateRanges.yesterday.end)
     : filterAndGroupSitesByTeam(data, getTeamForAgent, dateRanges.yesterday.start, dateRanges.yesterday.end);
@@ -252,7 +256,15 @@ const SiteCharts = ({ data, viewType, metricType, dateFrom, dateTo }: SiteCharts
         </CardContent>
       </Card>
 
-      {/* Weekly Statistics Table */}
+      {/* Current Month Statistics */}
+      <ChartCard 
+        title="Current Month" 
+        description={`${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} - Sites added this month`}
+        data={monthData}
+        color="#9C27B0"
+      />
+
+      {/* Daily Statistics Table */}
       <WeeklyStatsTable data={data} viewType={viewType} />
     </div>
   );

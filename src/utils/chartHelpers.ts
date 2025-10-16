@@ -149,11 +149,16 @@ export const getDateRanges = () => {
   
   const weekStart = getStartOfWeek(new Date());
   const weekEnd = getEndOfWeek(new Date());
+  
+  // Get current month range
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
   return {
     today: { start: today, end: new Date() },
     yesterday: { start: yesterday, end: new Date(yesterday.setHours(23, 59, 59, 999)) },
     thisWeek: { start: weekStart, end: weekEnd },
+    thisMonth: { start: monthStart, end: monthEnd },
   };
 };
 
