@@ -1,7 +1,10 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 import { SiteRecord, groupByWeekAndAgent, formatAgentName } from "@/utils/chartHelpers";
-import { getTeamForAgent } from "@/utils/teamMapping";
+import { getTeamForAgent, TEAMS } from "@/utils/teamMapping";
+import * as XLSX from 'xlsx';
 
 interface WeeklyStatsTableProps {
   data: SiteRecord[];
@@ -9,10 +12,33 @@ interface WeeklyStatsTableProps {
 }
 
 const WeeklyStatsTable = ({ data, viewType }: WeeklyStatsTableProps) => {
+  // Helper function to get team leader for an agent
+  const getTeamLeaderForAgent = (agentEmail: string): string => {
+    for (const team of TEAMS) {
+      const member = team.members.find(
+        (m) => m.email.toLowerCase() === agentEmail.toLowerCase()
+      );
+      if (member) {
+        return team.lead;
+      }
+    }
+    return 'Unknown';
+  };
+
+  // Helper function to format date as DD/MM/YYYY
+  const formatDateDDMMYYYY = (dateString: string): string => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   // Transform data for daily table format
   const tableData: Array<{
     date: string;
     agent: string;
+    agentEmail: string;
     sites: number;
     uniqueCustomers: number;
     interaction: number;
@@ -54,12 +80,21 @@ const WeeklyStatsTable = ({ data, viewType }: WeeklyStatsTableProps) => {
     }
   });
 
-  // Convert to array format
+  // Convert to array format - need to get original agent email for team leader lookup
+  const agentEmailMap = new Map<string, string>();
+  data.forEach(record => {
+    if (record.agent_name) {
+      const formattedName = formatAgentName(record.agent_name);
+      agentEmailMap.set(formattedName, record.agent_name);
+    }
+  });
+
   dailyGroups.forEach((agents, date) => {
     agents.forEach((data, agent) => {
       tableData.push({
         date,
         agent,
+        agentEmail: agentEmailMap.get(agent) || '',
         sites: data.sites,
         uniqueCustomers: data.contacts.size,
         interaction: data.interactions,
@@ -75,15 +110,54 @@ const WeeklyStatsTable = ({ data, viewType }: WeeklyStatsTableProps) => {
     return a.agent.localeCompare(b.agent);
   });
 
+  // Function to export to Excel
+  const exportToExcel = () => {
+    const exportData = tableData.map(row => {
+      const interactionPercentage = row.uniqueCustomers > 0 
+        ? Math.round((row.interaction / row.uniqueCustomers) * 100)
+        : 0;
+      
+      return {
+        'Date': formatDateDDMMYYYY(row.date),
+        [viewType === 'individual' ? 'Agent' : 'Team']: row.agent,
+        'Team Leader': viewType === 'individual' ? getTeamLeaderForAgent(row.agentEmail) : '',
+        'Sites Added': row.sites,
+        'Unique Customers': row.uniqueCustomers,
+        'Interactions': row.interaction,
+        'Interaction %': `${interactionPercentage}%`,
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Daily Statistics');
+    
+    const fileName = `Daily_Statistics_${viewType}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">
-          Daily Statistics by {viewType === 'individual' ? 'Agent' : 'Team'}
-        </CardTitle>
-        <CardDescription>
-          Day-by-day breakdown showing sites added, unique customers, and interactions
-        </CardDescription>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-2xl">
+              Daily Statistics by {viewType === 'individual' ? 'Agent' : 'Team'}
+            </CardTitle>
+            <CardDescription>
+              Day-by-day breakdown showing sites added, unique customers, and interactions
+            </CardDescription>
+          </div>
+          <Button 
+            onClick={exportToExcel} 
+            variant="outline" 
+            size="sm"
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Export to Excel
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
