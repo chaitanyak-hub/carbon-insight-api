@@ -29,21 +29,40 @@ const Index = () => {
         setLoading(true);
         setError(null);
         
-        console.log('Calling backend function...');
-        
+        console.log('Calling backend function via supabase.functions.invoke...');
         const { data: result, error: functionError } = await supabase.functions.invoke('fetch-carbon-data');
 
-        if (functionError) {
-          console.error('Function error:', functionError);
-          throw new Error(`Failed to fetch data: ${functionError.message}`);
+        if (!functionError && result) {
+          console.log('Data received (invoke):', result);
+          const records = Array.isArray(result)
+            ? result
+            : (result?.data?.sites || result?.sites || result?.records || result?.data || []);
+          setData(records);
+          return;
         }
 
-        console.log('Data received:', result);
-        
-        // Handle both array and object responses
-        const records = Array.isArray(result) 
-          ? result 
-          : (result?.data?.sites || result?.sites || result?.records || result?.data || []);
+        console.warn('invoke failed or returned empty, falling back to direct fetch...', functionError);
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-carbon-data`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Direct fetch error response:', errorText);
+          throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+        }
+
+        const fallbackResult = await response.json();
+        console.log('Data received (direct):', fallbackResult);
+        const records = Array.isArray(fallbackResult)
+          ? fallbackResult
+          : (fallbackResult?.data?.sites || fallbackResult?.sites || fallbackResult?.records || fallbackResult?.data || []);
         setData(records);
       } catch (err) {
         console.error('Error details:', err);
