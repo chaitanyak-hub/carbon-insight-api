@@ -24,45 +24,54 @@ const Index = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
+    const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+    const invokeWithRetry = async (attempt = 1): Promise<any> => {
+      const { data, error } = await supabase.functions.invoke('fetch-carbon-data');
+      if (error) {
+        if (attempt < 3) {
+          console.warn(`invoke attempt ${attempt} failed: ${error.message}. Retrying...`);
+          await sleep(500 * attempt);
+          return invokeWithRetry(attempt + 1);
+        }
+        throw new Error(`Failed to send a request to the backend after retries: ${error.message}`);
+      }
+      return data;
+    };
+
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        console.log('Calling backend function via supabase.functions.invoke...');
-        const { data: result, error: functionError } = await supabase.functions.invoke('fetch-carbon-data');
 
-        if (!functionError && result) {
-          console.log('Data received (invoke):', result);
-          const records = Array.isArray(result)
-            ? result
-            : (result?.data?.sites || result?.sites || result?.records || result?.data || []);
-          setData(records);
-          return;
+        let result: any = null;
+        try {
+          result = await invokeWithRetry();
+        } catch (invErr) {
+          console.warn('invoke failed after retries, falling back to direct fetch...', invErr);
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-carbon-data`;
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 12000);
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            signal: controller.signal,
+          }).finally(() => clearTimeout(timeout));
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Direct fetch failed: ${response.status} ${response.statusText} - ${errorText}`);
+          }
+          result = await response.json();
         }
 
-        console.warn('invoke failed or returned empty, falling back to direct fetch...', functionError);
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-carbon-data`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Direct fetch error response:', errorText);
-          throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
-        }
-
-        const fallbackResult = await response.json();
-        console.log('Data received (direct):', fallbackResult);
-        const records = Array.isArray(fallbackResult)
-          ? fallbackResult
-          : (fallbackResult?.data?.sites || fallbackResult?.sites || fallbackResult?.records || fallbackResult?.data || []);
+        const records = Array.isArray(result)
+          ? result
+          : (result?.data?.sites || result?.sites || result?.records || result?.data || []);
         setData(records);
       } catch (err) {
         console.error('Error details:', err);
