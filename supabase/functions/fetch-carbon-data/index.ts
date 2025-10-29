@@ -23,28 +23,73 @@ serve(async (req) => {
       throw new Error('API key not configured');
     }
 
-    const response = await fetch(
-      'http://domestic-prod-alb-terra-1678302567.eu-west-1.elb.amazonaws.com:6777/v3/site-activity?utmSource=EDF&siteType=ndomestic&includeSiteDetails=true&limit=3000',
-      {
+    let allSites: any[] = [];
+    let offset = 0;
+    let hasMore = true;
+    const limit = 100; // API seems to cap at 100 per request
+
+    while (hasMore) {
+      const url = `http://domestic-prod-alb-terra-1678302567.eu-west-1.elb.amazonaws.com:6777/v3/site-activity?utmSource=EDF&siteType=ndomestic&includeSiteDetails=true&limit=${limit}&offset=${offset}`;
+      
+      console.log(`Fetching page with offset ${offset}...`);
+      
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'e_api_key': apiKey,
         },
-      }
-    );
+      });
 
-    if (!response.ok) {
-      console.error(`API error: ${response.status} ${response.statusText}`);
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-      throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      if (!response.ok) {
+        console.error(`API error: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.data?.sites) {
+        allSites = [...allSites, ...data.data.sites];
+        console.log(`Fetched ${data.data.sites.length} sites, total so far: ${allSites.length}`);
+      }
+
+      hasMore = data.data?.summary?.pagination?.hasMore || false;
+      offset += limit;
+
+      if (!hasMore) {
+        console.log(`Successfully fetched all ${allSites.length} sites`);
+      }
     }
 
-    const data = await response.json();
-    console.log('Successfully fetched carbon data');
+    // Return combined data with updated summary
+    const responseData = {
+      code: 200,
+      status: "Success",
+      data: {
+        summary: {
+          totalSites: allSites.length,
+          returnedSites: allSites.length,
+          dateRange: {
+            from: "2024-01-01T00:00:00",
+            to: new Date().toISOString().split('T')[0] + "T23:59:00"
+          },
+          agentFilter: "all",
+          siteDetailsIncluded: true,
+          pagination: {
+            limit: allSites.length,
+            offset: 0,
+            currentPage: 1,
+            totalPages: 1,
+            hasMore: false
+          }
+        },
+        sites: allSites
+      }
+    };
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify(responseData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
