@@ -24,7 +24,7 @@ serve(async (req) => {
     }
 
     const response = await fetch(
-      'https://api.thelabrador.co.uk/carbon/v3/site-activity?utmSource=edf&siteType=ndomestic',
+      'http://domestic-prod-alb-terra-1678302567.eu-west-1.elb.amazonaws.com:6777/v3/site-activity?utmSource=EDF&siteType=ndomestic&includeSiteDetails=true&limit=3000',
       {
         method: 'GET',
         headers: {
