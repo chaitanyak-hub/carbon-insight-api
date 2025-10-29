@@ -23,16 +23,19 @@ serve(async (req) => {
       throw new Error('API key not configured');
     }
 
-    let allSites: any[] = [];
+    // Fetch ALL sites by paging until the API reports no more pages
+    const allSites: any[] = [];
     let offset = 0;
+
+    // Ask for a large page size, but adapt to whatever the API actually returns
+    const requestedLimit = 3000; // try to get everything in one go if the API allows it
     let hasMore = true;
-    const limit = 100; // API seems to cap at 100 per request
 
     while (hasMore) {
-      const url = `http://domestic-prod-alb-terra-1678302567.eu-west-1.elb.amazonaws.com:6777/v3/site-activity?utmSource=EDF&siteType=ndomestic&includeSiteDetails=true&limit=${limit}&offset=${offset}`;
-      
-      console.log(`Fetching page with offset ${offset}...`);
-      
+      const url = `http://domestic-prod-alb-terra-1678302567.eu-west-1.elb.amazonaws.com:6777/v3/site-activity?utmSource=EDF&siteType=ndomestic&includeSiteDetails=true&limit=${requestedLimit}&offset=${offset}`;
+
+      console.log(`Fetching page with offset=${offset}, requestedLimit=${requestedLimit}...`);
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -49,16 +52,28 @@ serve(async (req) => {
       }
 
       const data = await response.json();
-      
-      if (data.data?.sites) {
-        allSites = [...allSites, ...data.data.sites];
-        console.log(`Fetched ${data.data.sites.length} sites, total so far: ${allSites.length}`);
+
+      const pageSites = data?.data?.sites ?? [];
+      const pagination = data?.data?.summary?.pagination ?? {};
+      const actualPageLimit: number = Number(pagination.limit) || pageSites.length || requestedLimit;
+
+      if (pageSites.length) {
+        allSites.push(...pageSites);
       }
 
-      hasMore = data.data?.summary?.pagination?.hasMore || false;
-      offset += limit;
+      console.log(`Fetched ${pageSites.length} sites this page (API limit=${actualPageLimit}). Total so far: ${allSites.length}`);
 
-      if (!hasMore) {
+      // Determine if there are more pages. Prefer explicit flag, otherwise infer from page size
+      hasMore = Boolean(pagination.hasMore);
+      if (hasMore === false && pageSites.length === actualPageLimit) {
+        // Some APIs don't set hasMore=false on the last page; infer using size equality
+        hasMore = true;
+      }
+
+      if (hasMore) {
+        offset += actualPageLimit;
+        console.log(`Continuing pagination. Next offset will be ${offset}`);
+      } else {
         console.log(`Successfully fetched all ${allSites.length} sites`);
       }
     }
@@ -73,7 +88,7 @@ serve(async (req) => {
           returnedSites: allSites.length,
           dateRange: {
             from: "2024-01-01T00:00:00",
-            to: new Date().toISOString().split('T')[0] + "T23:59:00"
+            to: new Date().toISOString().split('T')[0] + "T23:59:00",
           },
           agentFilter: "all",
           siteDetailsIncluded: true,
@@ -82,11 +97,11 @@ serve(async (req) => {
             offset: 0,
             currentPage: 1,
             totalPages: 1,
-            hasMore: false
-          }
+            hasMore: false,
+          },
         },
-        sites: allSites
-      }
+        sites: allSites,
+      },
     };
 
     return new Response(JSON.stringify(responseData), {
