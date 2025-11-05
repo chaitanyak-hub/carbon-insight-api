@@ -1,10 +1,12 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Download, ChevronDown } from "lucide-react";
 import { SiteRecord, groupByWeekAndAgent, formatAgentName } from "@/utils/chartHelpers";
 import { getTeamForAgent, TEAMS } from "@/utils/teamMapping";
 import * as XLSX from 'xlsx';
+import { useState } from "react";
 
 interface WeeklyStatsTableProps {
   data: SiteRecord[];
@@ -12,6 +14,8 @@ interface WeeklyStatsTableProps {
 }
 
 const WeeklyStatsTable = ({ data, viewType }: WeeklyStatsTableProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   // Helper function to get team leader for an agent
   const getTeamLeaderForAgent = (agentEmail: string): string => {
     for (const team of TEAMS) {
@@ -137,71 +141,82 @@ const WeeklyStatsTable = ({ data, viewType }: WeeklyStatsTableProps) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-2xl">
-              Daily Statistics by {viewType === 'individual' ? 'Agent' : 'Team'}
-            </CardTitle>
-            <CardDescription>
-              Day-by-day breakdown showing sites added, unique customers, and interactions
-            </CardDescription>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="p-0 hover:bg-transparent">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-2xl">
+                      Daily Statistics by {viewType === 'individual' ? 'Agent' : 'Team'}
+                    </CardTitle>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </Button>
+              </CollapsibleTrigger>
+              <CardDescription>
+                Day-by-day breakdown showing sites added, unique customers, and interactions
+              </CardDescription>
+            </div>
+            <Button 
+              onClick={exportToExcel} 
+              variant="outline" 
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export to Excel
+            </Button>
           </div>
-          <Button 
-            onClick={exportToExcel} 
-            variant="outline" 
-            size="sm"
-            className="gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Export to Excel
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-bold">Date</TableHead>
-                <TableHead className="font-bold">{viewType === 'individual' ? 'Agent' : 'Team'}</TableHead>
-                <TableHead className="text-right font-bold">Sites Added</TableHead>
-                <TableHead className="text-right font-bold">Unique Customers</TableHead>
-                <TableHead className="text-right font-bold">Interactions</TableHead>
-                <TableHead className="text-right font-bold">Interaction %</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    No data available
-                  </TableCell>
-                </TableRow>
-              ) : (
-                tableData.map((row, index) => {
-                  const interactionPercentage = row.uniqueCustomers > 0 
-                    ? Math.round((row.interaction / row.uniqueCustomers) * 100)
-                    : 0;
-                  
-                  return (
-                    <TableRow key={`${row.date}-${row.agent}-${index}`}>
-                      <TableCell className="font-medium">{row.date}</TableCell>
-                      <TableCell>{row.agent}</TableCell>
-                      <TableCell className="text-right">{row.sites}</TableCell>
-                      <TableCell className="text-right">{row.uniqueCustomers}</TableCell>
-                      <TableCell className="text-right">{row.interaction}</TableCell>
-                      <TableCell className="text-right">{interactionPercentage}%</TableCell>
+        </CardHeader>
+        <CollapsibleContent>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-bold">Date</TableHead>
+                    <TableHead className="font-bold">{viewType === 'individual' ? 'Agent' : 'Team'}</TableHead>
+                    <TableHead className="text-right font-bold">Sites Added</TableHead>
+                    <TableHead className="text-right font-bold">Unique Customers</TableHead>
+                    <TableHead className="text-right font-bold">Interactions</TableHead>
+                    <TableHead className="text-right font-bold">Interaction %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tableData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        No data available
+                      </TableCell>
                     </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                  ) : (
+                    tableData.map((row, index) => {
+                      const interactionPercentage = row.uniqueCustomers > 0 
+                        ? Math.round((row.interaction / row.uniqueCustomers) * 100)
+                        : 0;
+                      
+                      return (
+                        <TableRow key={`${row.date}-${row.agent}-${index}`}>
+                          <TableCell className="font-medium">{row.date}</TableCell>
+                          <TableCell>{row.agent}</TableCell>
+                          <TableCell className="text-right">{row.sites}</TableCell>
+                          <TableCell className="text-right">{row.uniqueCustomers}</TableCell>
+                          <TableCell className="text-right">{row.interaction}</TableCell>
+                          <TableCell className="text-right">{interactionPercentage}%</TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 };
 
