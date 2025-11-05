@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { filterAndGroupSites, filterAndGroupSitesByTeam, getDateRanges, groupByWeekAndAgent, SiteRecord } from "@/utils/chartHelpers";
 import { getTeamForAgent } from "@/utils/teamMapping";
 import WeeklyStatsTable from "./WeeklyStatsTable";
+import SiteStatisticsTable from "./SiteStatisticsTable";
 
 interface SiteChartsProps {
   data: SiteRecord[];
@@ -266,6 +267,9 @@ const SiteCharts = ({ data, viewType, metricType, dateFrom, dateTo }: SiteCharts
 
       {/* Daily Statistics Table */}
       <WeeklyStatsTable data={data} viewType={viewType} />
+
+      {/* Site Statistics Table */}
+      <SiteStatisticsTable data={data} />
     </div>
   );
 };
