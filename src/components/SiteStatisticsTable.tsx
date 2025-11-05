@@ -33,6 +33,15 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
     return 'N/A';
   };
 
+  // Helper function to extract MPRN from gasMeter object
+  const extractMPRN = (record: any): string => {
+    if (record.gasMeter && typeof record.gasMeter === 'object') {
+      const mprns = Object.keys(record.gasMeter);
+      return mprns.length > 0 ? mprns.join(', ') : 'N/A';
+    }
+    return 'N/A';
+  };
+
   // Transform data for site statistics table
   const tableData = data.map(record => ({
     address: record.siteAddress || record.display_name || 'N/A',
@@ -40,6 +49,8 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
     siteAddedDate: record.onboard_date || '',
     siteStatus: record.site_status || 'N/A',
     mpan: extractMPAN(record),
+    mprn: extractMPRN(record),
+    companyName: record.company_name || 'N/A',
   }));
 
   // Sort by site added date (most recent first)
@@ -57,6 +68,8 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
       'Site Added Date': formatDateDDMMYYYY(row.siteAddedDate),
       'Site Status': row.siteStatus,
       'MPAN': row.mpan,
+      'MPRN': row.mprn,
+      'Company Name': row.companyName,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -109,12 +122,14 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                     <TableHead className="font-bold">Site Added Date</TableHead>
                     <TableHead className="font-bold">Site Status</TableHead>
                     <TableHead className="font-bold">MPAN</TableHead>
+                    <TableHead className="font-bold">MPRN</TableHead>
+                    <TableHead className="font-bold">Company Name</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tableData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         No data available
                       </TableCell>
                     </TableRow>
@@ -134,6 +149,8 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                           </span>
                         </TableCell>
                         <TableCell className="font-mono text-sm">{row.mpan}</TableCell>
+                        <TableCell className="font-mono text-sm">{row.mprn}</TableCell>
+                        <TableCell>{row.companyName}</TableCell>
                       </TableRow>
                     ))
                   )}
