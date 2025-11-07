@@ -175,7 +175,7 @@ const SiteCharts = ({ data, viewType, metricType, dateFrom, dateTo }: SiteCharts
       />
       <ChartCard 
         title="This Week" 
-        description="Monday to Sunday"
+        description="Wednesday to Tuesday"
         data={weekData}
         color="#FF5733"
       />
