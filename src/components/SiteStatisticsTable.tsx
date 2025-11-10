@@ -48,9 +48,13 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
     agentName: formatAgentName(record.agent_name || 'Unknown'),
     siteAddedDate: record.onboard_date || '',
     siteStatus: record.site_status || 'N/A',
+    contactEmail: record.contact_email || 'N/A',
+    firstName: record.contact_first_name || 'N/A',
+    lastName: record.contact_last_name || 'N/A',
     mpan: extractMPAN(record),
     mprn: extractMPRN(record),
     companyName: record.company_name || 'N/A',
+    interactionStatus: record.last_login ? 'Yes' : 'No',
   }));
 
   // Sort by site added date (most recent first)
@@ -63,13 +67,17 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
   // Function to export to Excel
   const exportToExcel = () => {
     const exportData = tableData.map(row => ({
-      'Address': row.address,
+      'Site Address': row.address,
       'Agent Name': row.agentName,
       'Site Added Date': formatDateDDMMYYYY(row.siteAddedDate),
       'Site Status': row.siteStatus,
+      'Customer Email': row.contactEmail,
+      'First Name': row.firstName,
+      'Last Name': row.lastName,
       'MPAN': row.mpan,
       'MPRN': row.mprn,
       'Company Name': row.companyName,
+      'Interaction Status': row.interactionStatus,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -97,7 +105,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                 </Button>
               </CollapsibleTrigger>
               <CardDescription>
-                Detailed information about all sites including address, agent, status, and MPAN
+                Detailed information about all sites including contact details and interaction status
               </CardDescription>
             </div>
             <Button 
@@ -117,19 +125,23 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-bold">Address</TableHead>
+                    <TableHead className="font-bold">Site Address</TableHead>
                     <TableHead className="font-bold">Agent Name</TableHead>
                     <TableHead className="font-bold">Site Added Date</TableHead>
                     <TableHead className="font-bold">Site Status</TableHead>
+                    <TableHead className="font-bold">Customer Email</TableHead>
+                    <TableHead className="font-bold">First Name</TableHead>
+                    <TableHead className="font-bold">Last Name</TableHead>
                     <TableHead className="font-bold">MPAN</TableHead>
                     <TableHead className="font-bold">MPRN</TableHead>
                     <TableHead className="font-bold">Company Name</TableHead>
+                    <TableHead className="font-bold">Interaction Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tableData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                         No data available
                       </TableCell>
                     </TableRow>
@@ -148,9 +160,21 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                             {row.siteStatus}
                           </span>
                         </TableCell>
+                        <TableCell>{row.contactEmail}</TableCell>
+                        <TableCell>{row.firstName}</TableCell>
+                        <TableCell>{row.lastName}</TableCell>
                         <TableCell className="font-mono text-sm">{row.mpan}</TableCell>
                         <TableCell className="font-mono text-sm">{row.mprn}</TableCell>
                         <TableCell>{row.companyName}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            row.interactionStatus === 'Yes' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {row.interactionStatus}
+                          </span>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
