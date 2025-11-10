@@ -42,20 +42,22 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
     return 'N/A';
   };
 
-  // Transform data for site statistics table
-  const tableData = data.map(record => ({
-    address: record.siteAddress || record.display_name || 'N/A',
-    agentName: formatAgentName(record.agent_name || 'Unknown'),
-    siteAddedDate: record.onboard_date || '',
-    siteStatus: record.site_status || 'N/A',
-    contactEmail: record.contact_email || 'N/A',
-    firstName: record.contact_first_name || 'N/A',
-    lastName: record.contact_last_name || 'N/A',
-    mpan: extractMPAN(record),
-    mprn: extractMPRN(record),
-    companyName: record.company_name || 'N/A',
-    interactionStatus: record.last_login ? 'Yes' : 'No',
-  }));
+  // Transform data for site statistics table - only ACTIVE sites
+  const tableData = data
+    .filter(record => record.site_status === 'ACTIVE')
+    .map(record => ({
+      address: record.siteAddress || record.display_name || 'N/A',
+      agentName: formatAgentName(record.agent_name || 'Unknown'),
+      siteAddedDate: record.onboard_date || '',
+      siteStatus: record.site_status || 'N/A',
+      contactEmail: record.contact_email || 'N/A',
+      firstName: record.contact_first_name || 'N/A',
+      lastName: record.contact_last_name || 'N/A',
+      mpan: extractMPAN(record),
+      mprn: extractMPRN(record),
+      companyName: record.company_name || 'N/A',
+      interactionStatus: (record as any).latest_contact_login ? 'Yes' : 'No',
+    }));
 
   // Sort by site added date (most recent first)
   tableData.sort((a, b) => {
