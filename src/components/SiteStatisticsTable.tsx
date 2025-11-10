@@ -51,6 +51,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
       siteAddedDate: record.onboard_date || '',
       siteStatus: record.site_status || 'N/A',
       contactEmail: record.contact_email || 'N/A',
+      contactPhone: record.contact_phone || 'N/A',
       firstName: record.contact_first_name || 'N/A',
       lastName: record.contact_last_name || 'N/A',
       mpan: extractMPAN(record),
@@ -74,6 +75,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
       'Site Added Date': formatDateDDMMYYYY(row.siteAddedDate),
       'Site Status': row.siteStatus,
       'Customer Email': row.contactEmail,
+      'Contact Phone': row.contactPhone,
       'First Name': row.firstName,
       'Last Name': row.lastName,
       'MPAN': row.mpan,
@@ -132,6 +134,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                     <TableHead className="font-bold">Site Added Date</TableHead>
                     <TableHead className="font-bold">Site Status</TableHead>
                     <TableHead className="font-bold">Customer Email</TableHead>
+                    <TableHead className="font-bold">Contact Phone</TableHead>
                     <TableHead className="font-bold">First Name</TableHead>
                     <TableHead className="font-bold">Last Name</TableHead>
                     <TableHead className="font-bold">MPAN</TableHead>
@@ -143,7 +146,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                 <TableBody>
                   {tableData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
                         No data available
                       </TableCell>
                     </TableRow>
@@ -163,6 +166,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                           </span>
                         </TableCell>
                         <TableCell>{row.contactEmail}</TableCell>
+                        <TableCell>{row.contactPhone}</TableCell>
                         <TableCell>{row.firstName}</TableCell>
                         <TableCell>{row.lastName}</TableCell>
                         <TableCell className="font-mono text-sm">{row.mpan}</TableCell>
