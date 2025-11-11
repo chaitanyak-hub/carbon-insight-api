@@ -403,7 +403,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                     borderRadius: '8px'
                   }}
                   formatter={(value: any, name: string) => {
-                    if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
+                    if (name.includes('£') || name.includes('Savings') || name.includes('Investment') || name.includes('Opportunity')) {
                       return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                     }
                     if (name.includes('Carbon')) {
@@ -414,7 +414,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 />
                 <Legend />
                 <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
-                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Investment / Opportunity (£)" radius={[0, 8, 8, 0]} />
                 <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -447,7 +447,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                     borderRadius: '8px'
                   }}
                   formatter={(value: any, name: string) => {
-                    if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
+                    if (name.includes('£') || name.includes('Savings') || name.includes('Investment') || name.includes('Opportunity')) {
                       return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                     }
                     if (name.includes('Carbon')) {
@@ -458,7 +458,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 />
                 <Legend />
                 <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
-                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Investment / Opportunity (£)" radius={[0, 8, 8, 0]} />
                 <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -491,7 +491,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                     borderRadius: '8px'
                   }}
                   formatter={(value: any, name: string) => {
-                    if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
+                    if (name.includes('£') || name.includes('Savings') || name.includes('Investment') || name.includes('Opportunity')) {
                       return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                     }
                     if (name.includes('Carbon')) {
@@ -502,7 +502,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 />
                 <Legend />
                 <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
-                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Investment / Opportunity (£)" radius={[0, 8, 8, 0]} />
                 <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -535,7 +535,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                     borderRadius: '8px'
                   }}
                   formatter={(value: any, name: string) => {
-                    if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
+                    if (name.includes('£') || name.includes('Savings') || name.includes('Investment') || name.includes('Opportunity')) {
                       return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                     }
                     if (name.includes('Carbon')) {
@@ -546,7 +546,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 />
                 <Legend />
                 <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
-                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Investment / Opportunity (£)" radius={[0, 8, 8, 0]} />
                 <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
