@@ -42,7 +42,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
     return 'N/A';
   };
 
-  // Helper function to format recommendations with all data
+  // Helper function to format recommendations with key data
   const formatRecommendations = (record: any): string => {
     if (record.recommendations && Array.isArray(record.recommendations) && record.recommendations.length > 0) {
       return record.recommendations
@@ -51,15 +51,9 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
           const parts = [
             `Type: ${rec.type}`,
             `Savings: £${rec.potential_savings.toFixed(2)}`,
-            `Carbon Savings: ${rec.potential_carbon_savings?.toFixed(2) || 0} kg CO₂`,
-            `Energy Savings: ${rec.potential_energy_savings?.toFixed(2) || 0} kWh`,
-            rec.elec_energy_savings ? `Elec Savings: ${rec.elec_energy_savings.toFixed(2)} kWh` : null,
-            rec.gas_energy_savings ? `Gas Savings: ${rec.gas_energy_savings.toFixed(2)} kWh` : null,
-            `Upgrade Cost: £${rec.upgrade_cost?.toFixed(2) || 0}`,
-            rec.payback_period !== null && rec.payback_period !== undefined ? `Payback: ${rec.payback_period.toFixed(2)} years` : null,
-            rec.panelCount ? `Panels: ${rec.panelCount}` : null,
-            rec.annualGeneration ? `Annual Gen: ${rec.annualGeneration.toFixed(2)} kWh` : null,
-          ].filter(Boolean);
+            `Cost: £${rec.upgrade_cost?.toFixed(2) || 0}`,
+            rec.payback_period !== null && rec.payback_period !== undefined ? `Payback: ${rec.payback_period.toFixed(2)} years` : 'Payback: N/A',
+          ];
           return `[${parts.join(' | ')}]`;
         })
         .join(' ');
