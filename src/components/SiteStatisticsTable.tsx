@@ -42,6 +42,17 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
     return 'N/A';
   };
 
+  // Helper function to format recommendations
+  const formatRecommendations = (record: any): string => {
+    if (record.recommendations && Array.isArray(record.recommendations) && record.recommendations.length > 0) {
+      return record.recommendations
+        .filter((rec: any) => rec.potential_savings > 0)
+        .map((rec: any) => `${rec.type}: £${rec.potential_savings.toFixed(2)}`)
+        .join(', ');
+    }
+    return 'N/A';
+  };
+
   // Transform data for site statistics table - only ACTIVE sites
   const tableData = data
     .filter(record => record.site_status === 'ACTIVE')
@@ -57,6 +68,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
       mpan: extractMPAN(record),
       mprn: extractMPRN(record),
       companyName: record.company_name || 'N/A',
+      recommendations: formatRecommendations(record),
       interactionStatus: (record as any).latest_contact_login ? 'Yes' : 'No',
     }));
 
@@ -81,6 +93,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
       'MPAN': row.mpan,
       'MPRN': row.mprn,
       'Company Name': row.companyName,
+      'Recommendations': row.recommendations,
       'Interaction Status': row.interactionStatus,
     }));
 
@@ -140,13 +153,14 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                     <TableHead className="font-bold">MPAN</TableHead>
                     <TableHead className="font-bold">MPRN</TableHead>
                     <TableHead className="font-bold">Company Name</TableHead>
+                    <TableHead className="font-bold">Recommendations</TableHead>
                     <TableHead className="font-bold">Interaction Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tableData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
                         No data available
                       </TableCell>
                     </TableRow>
@@ -172,6 +186,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                         <TableCell className="font-mono text-sm">{row.mpan}</TableCell>
                         <TableCell className="font-mono text-sm">{row.mprn}</TableCell>
                         <TableCell>{row.companyName}</TableCell>
+                        <TableCell className="text-sm">{row.recommendations}</TableCell>
                         <TableCell>
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             row.interactionStatus === 'Yes' 
