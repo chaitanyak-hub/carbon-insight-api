@@ -53,6 +53,16 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
     return 'N/A';
   };
 
+  // Helper function to calculate total savings
+  const calculateTotalSavings = (record: any): number => {
+    if (record.recommendations && Array.isArray(record.recommendations) && record.recommendations.length > 0) {
+      return record.recommendations
+        .filter((rec: any) => rec.potential_savings > 0)
+        .reduce((total: number, rec: any) => total + (rec.potential_savings || 0), 0);
+    }
+    return 0;
+  };
+
   // Transform data for site statistics table - only ACTIVE sites
   const tableData = data
     .filter(record => record.site_status === 'ACTIVE')
@@ -69,6 +79,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
       mprn: extractMPRN(record),
       companyName: record.company_name || 'N/A',
       recommendations: formatRecommendations(record),
+      totalSavings: calculateTotalSavings(record),
       interactionStatus: (record as any).latest_contact_login ? 'Yes' : 'No',
     }));
 
@@ -94,6 +105,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
       'MPRN': row.mprn,
       'Company Name': row.companyName,
       'Recommendations': row.recommendations,
+      'Total Savings': `£${row.totalSavings.toFixed(2)}`,
       'Interaction Status': row.interactionStatus,
     }));
 
@@ -154,13 +166,14 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                     <TableHead className="font-bold">MPRN</TableHead>
                     <TableHead className="font-bold">Company Name</TableHead>
                     <TableHead className="font-bold">Recommendations</TableHead>
+                    <TableHead className="font-bold">Total Savings</TableHead>
                     <TableHead className="font-bold">Interaction Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tableData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
                         No data available
                       </TableCell>
                     </TableRow>
@@ -187,6 +200,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
                         <TableCell className="font-mono text-sm">{row.mprn}</TableCell>
                         <TableCell>{row.companyName}</TableCell>
                         <TableCell className="text-sm">{row.recommendations}</TableCell>
+                        <TableCell className="font-semibold text-green-600">£{row.totalSavings.toFixed(2)}</TableCell>
                         <TableCell>
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             row.interactionStatus === 'Yes' 
