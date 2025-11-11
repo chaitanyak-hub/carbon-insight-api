@@ -14,7 +14,7 @@ import {
   getPreviousMonthStats,
   getTotalStats,
 } from "@/utils/organisationHelpers";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp, DollarSign, Leaf, Package } from "lucide-react";
 
 interface OrganisationStatsProps {
@@ -385,77 +385,41 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
           <h3 className="text-2xl font-bold text-foreground">Recommendation Analysis - Last 7 Days</h3>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-lg">By Recommendation Type</CardTitle>
-              <CardDescription>Savings, costs, and carbon impact by type</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={last7DaysRecStats} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                  <XAxis type="number" className="text-xs" />
-                  <YAxis type="category" dataKey="type" className="text-xs" width={90} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value: any, name: string) => {
-                      if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
-                        return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                      }
-                      if (name.includes('Carbon')) {
-                        return `${Number(value).toFixed(2)} kg CO₂`;
-                      }
-                      return value;
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
-                  <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
-                  <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-lg">Distribution by Type</CardTitle>
-              <CardDescription>Recommendation count distribution</CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={350}>
-                <PieChart>
-                  <Pie
-                    data={last7DaysRecStats}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.type}: ${entry.count}`}
-                    outerRadius={120}
-                    fill="#8884d8"
-                    dataKey="count"
-                  >
-                    {last7DaysRecStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="text-lg">By Recommendation Type</CardTitle>
+            <CardDescription>Savings, costs, and carbon impact by type</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={last7DaysRecStats} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                <XAxis type="number" className="text-xs" />
+                <YAxis type="category" dataKey="type" className="text-xs" width={90} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value: any, name: string) => {
+                    if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
+                      return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    }
+                    if (name.includes('Carbon')) {
+                      return `${Number(value).toFixed(2)} kg CO₂`;
+                    }
+                    return value;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recommendation Type Analysis - Current Month */}
@@ -465,77 +429,41 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
           <h3 className="text-2xl font-bold text-foreground">Recommendation Analysis - Current Month</h3>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-lg">By Recommendation Type</CardTitle>
-              <CardDescription>Savings, costs, and carbon impact by type</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={currentMonthRecStats} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                  <XAxis type="number" className="text-xs" />
-                  <YAxis type="category" dataKey="type" className="text-xs" width={90} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value: any, name: string) => {
-                      if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
-                        return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                      }
-                      if (name.includes('Carbon')) {
-                        return `${Number(value).toFixed(2)} kg CO₂`;
-                      }
-                      return value;
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
-                  <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
-                  <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-lg">Distribution by Type</CardTitle>
-              <CardDescription>Recommendation count distribution</CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={350}>
-                <PieChart>
-                  <Pie
-                    data={currentMonthRecStats}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.type}: ${entry.count}`}
-                    outerRadius={120}
-                    fill="#8884d8"
-                    dataKey="count"
-                  >
-                    {currentMonthRecStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="text-lg">By Recommendation Type</CardTitle>
+            <CardDescription>Savings, costs, and carbon impact by type</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={currentMonthRecStats} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                <XAxis type="number" className="text-xs" />
+                <YAxis type="category" dataKey="type" className="text-xs" width={90} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value: any, name: string) => {
+                    if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
+                      return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    }
+                    if (name.includes('Carbon')) {
+                      return `${Number(value).toFixed(2)} kg CO₂`;
+                    }
+                    return value;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recommendation Type Analysis - Previous Month */}
@@ -545,77 +473,41 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
           <h3 className="text-2xl font-bold text-foreground">Recommendation Analysis - Previous Month</h3>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-lg">By Recommendation Type</CardTitle>
-              <CardDescription>Savings, costs, and carbon impact by type</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={previousMonthRecStats} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                  <XAxis type="number" className="text-xs" />
-                  <YAxis type="category" dataKey="type" className="text-xs" width={90} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value: any, name: string) => {
-                      if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
-                        return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                      }
-                      if (name.includes('Carbon')) {
-                        return `${Number(value).toFixed(2)} kg CO₂`;
-                      }
-                      return value;
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
-                  <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
-                  <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-lg">Distribution by Type</CardTitle>
-              <CardDescription>Recommendation count distribution</CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={350}>
-                <PieChart>
-                  <Pie
-                    data={previousMonthRecStats}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.type}: ${entry.count}`}
-                    outerRadius={120}
-                    fill="#8884d8"
-                    dataKey="count"
-                  >
-                    {previousMonthRecStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="text-lg">By Recommendation Type</CardTitle>
+            <CardDescription>Savings, costs, and carbon impact by type</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={previousMonthRecStats} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                <XAxis type="number" className="text-xs" />
+                <YAxis type="category" dataKey="type" className="text-xs" width={90} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value: any, name: string) => {
+                    if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
+                      return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    }
+                    if (name.includes('Carbon')) {
+                      return `${Number(value).toFixed(2)} kg CO₂`;
+                    }
+                    return value;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recommendation Type Analysis - Total */}
@@ -625,77 +517,41 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
           <h3 className="text-2xl font-bold text-foreground">Recommendation Analysis - All Time</h3>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-lg">By Recommendation Type</CardTitle>
-              <CardDescription>Total savings, costs, and carbon impact by type</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={totalRecStats} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                  <XAxis type="number" className="text-xs" />
-                  <YAxis type="category" dataKey="type" className="text-xs" width={90} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value: any, name: string) => {
-                      if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
-                        return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                      }
-                      if (name.includes('Carbon')) {
-                        return `${Number(value).toFixed(2)} kg CO₂`;
-                      }
-                      return value;
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
-                  <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
-                  <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-lg">Distribution by Type</CardTitle>
-              <CardDescription>Overall recommendation count distribution</CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={350}>
-                <PieChart>
-                  <Pie
-                    data={totalRecStats}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.type}: ${entry.count}`}
-                    outerRadius={120}
-                    fill="#8884d8"
-                    dataKey="count"
-                  >
-                    {totalRecStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="text-lg">By Recommendation Type</CardTitle>
+            <CardDescription>Total savings, costs, and carbon impact by type</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={totalRecStats} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                <XAxis type="number" className="text-xs" />
+                <YAxis type="category" dataKey="type" className="text-xs" width={90} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value: any, name: string) => {
+                    if (name.includes('£') || name.includes('Savings') || name.includes('Cost')) {
+                      return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    }
+                    if (name.includes('Carbon')) {
+                      return `${Number(value).toFixed(2)} kg CO₂`;
+                    }
+                    return value;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Total Cost (£)" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
