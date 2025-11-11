@@ -47,7 +47,7 @@ const SiteStatisticsTable = ({ data }: SiteStatisticsTableProps) => {
     if (record.recommendations && Array.isArray(record.recommendations) && record.recommendations.length > 0) {
       return record.recommendations
         .filter((rec: any) => rec.potential_savings > 0)
-        .map((rec: any) => `${rec.type}: £${rec.potential_savings.toFixed(2)}`)
+        .map((rec: any) => `${rec.type}: Savings £${rec.potential_savings.toFixed(2)}`)
         .join(', ');
     }
     return 'N/A';
