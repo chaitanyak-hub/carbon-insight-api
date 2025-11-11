@@ -18,6 +18,14 @@ export interface DailyStats {
   carbonSavings: number;
 }
 
+export interface RecommendationTypeStats {
+  type: string;
+  totalSavings: number;
+  totalCost: number;
+  totalCarbonSavings: number;
+  count: number;
+}
+
 const isDateInRange = (dateStr: string | null | undefined, startDate: Date, endDate: Date): boolean => {
   if (!dateStr) return false;
   const date = new Date(dateStr);
@@ -248,4 +256,97 @@ export const getTotalDailyStats = (records: SiteRecord[]): DailyStats[] => {
       carbonSavings: totalCarbonSavings,
     };
   });
+};
+
+// Recommendation Type Analysis
+const getRecommendationTypeStatsForRange = (
+  records: SiteRecord[],
+  startDate: Date,
+  endDate: Date
+): RecommendationTypeStats[] => {
+  const activeSites = records.filter(
+    (record) =>
+      record.site_status === "ACTIVE" &&
+      isDateInRange(record.onboard_date, startDate, endDate)
+  );
+
+  const typeMap = new Map<string, RecommendationTypeStats>();
+
+  activeSites.forEach((record) => {
+    if (record.recommendations && Array.isArray(record.recommendations)) {
+      record.recommendations.forEach((rec: any) => {
+        const type = rec.type || "Unknown";
+        const existing = typeMap.get(type) || {
+          type,
+          totalSavings: 0,
+          totalCost: 0,
+          totalCarbonSavings: 0,
+          count: 0,
+        };
+
+        typeMap.set(type, {
+          type,
+          totalSavings: existing.totalSavings + (rec.potential_savings || 0),
+          totalCost: existing.totalCost + (rec.upgrade_cost || 0),
+          totalCarbonSavings: existing.totalCarbonSavings + (rec.potential_carbon_savings || 0),
+          count: existing.count + 1,
+        });
+      });
+    }
+  });
+
+  return Array.from(typeMap.values()).sort((a, b) => b.totalSavings - a.totalSavings);
+};
+
+export const getLast7DaysRecommendationStats = (records: SiteRecord[]): RecommendationTypeStats[] => {
+  const now = new Date();
+  const startDate = startOfDay(subDays(now, 6));
+  const endDate = endOfDay(now);
+  return getRecommendationTypeStatsForRange(records, startDate, endDate);
+};
+
+export const getCurrentMonthRecommendationStats = (records: SiteRecord[]): RecommendationTypeStats[] => {
+  const now = new Date();
+  const startDate = startOfMonth(now);
+  const endDate = endOfDay(now);
+  return getRecommendationTypeStatsForRange(records, startDate, endDate);
+};
+
+export const getPreviousMonthRecommendationStats = (records: SiteRecord[]): RecommendationTypeStats[] => {
+  const now = new Date();
+  const previousMonth = subMonths(now, 1);
+  const startDate = startOfMonth(previousMonth);
+  const endDate = endOfMonth(previousMonth);
+  return getRecommendationTypeStatsForRange(records, startDate, endDate);
+};
+
+export const getTotalRecommendationStats = (records: SiteRecord[]): RecommendationTypeStats[] => {
+  const activeSites = records.filter((record) => record.site_status === "ACTIVE");
+  
+  const typeMap = new Map<string, RecommendationTypeStats>();
+
+  activeSites.forEach((record) => {
+    if (record.recommendations && Array.isArray(record.recommendations)) {
+      record.recommendations.forEach((rec: any) => {
+        const type = rec.type || "Unknown";
+        const existing = typeMap.get(type) || {
+          type,
+          totalSavings: 0,
+          totalCost: 0,
+          totalCarbonSavings: 0,
+          count: 0,
+        };
+
+        typeMap.set(type, {
+          type,
+          totalSavings: existing.totalSavings + (rec.potential_savings || 0),
+          totalCost: existing.totalCost + (rec.upgrade_cost || 0),
+          totalCarbonSavings: existing.totalCarbonSavings + (rec.potential_carbon_savings || 0),
+          count: existing.count + 1,
+        });
+      });
+    }
+  });
+
+  return Array.from(typeMap.values()).sort((a, b) => b.totalSavings - a.totalSavings);
 };
