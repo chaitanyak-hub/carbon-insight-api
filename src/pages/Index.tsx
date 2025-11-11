@@ -120,9 +120,14 @@ const Index = () => {
             </Alert>
           )}
 
-          {/* Charts Display */}
+          {/* Agent Based Statistics Section */}
           {data.length > 0 && !loading && (
-            <>
+            <div className="space-y-8">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold text-foreground">Agent Based Statistics</h2>
+                <p className="text-muted-foreground">Individual agent and team performance metrics</p>
+              </div>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Data Summary</CardTitle>
@@ -224,7 +229,25 @@ const Index = () => {
                 dateFrom={dateFrom}
                 dateTo={dateTo}
               />
-            </>
+            </div>
+          )}
+
+          {/* Organisation Based Section */}
+          {data.length > 0 && !loading && (
+            <div className="space-y-8 mt-12 pt-12 border-t border-border">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold text-foreground">Organisation Based Statistics</h2>
+                <p className="text-muted-foreground">Company-wide metrics and analytics</p>
+              </div>
+
+              <Card>
+                <CardContent className="py-12">
+                  <p className="text-center text-muted-foreground">
+                    Organisation statistics coming soon...
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       </div>
