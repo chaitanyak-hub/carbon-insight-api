@@ -6,6 +6,7 @@ import { Loader2, Leaf, AlertCircle, CalendarIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import SiteCharts from "@/components/SiteCharts";
+import OrganisationStats from "@/components/OrganisationStats";
 import { SiteRecord } from "@/utils/chartHelpers";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -240,13 +241,7 @@ const Index = () => {
                 <p className="text-muted-foreground">Company-wide metrics and analytics</p>
               </div>
 
-              <Card>
-                <CardContent className="py-12">
-                  <p className="text-center text-muted-foreground">
-                    Organisation statistics coming soon...
-                  </p>
-                </CardContent>
-              </Card>
+              <OrganisationStats data={data} />
             </div>
           )}
         </div>
