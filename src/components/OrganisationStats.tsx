@@ -475,6 +475,27 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 <Bar yAxisId="right" dataKey="carbonSavings" fill="url(#colorCarbon)" name="Carbon Savings (kg CO₂)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold mb-3">Data Table</h4>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Total Savings (£)</TableHead>
+                    <TableHead className="text-right">Carbon Savings (kg CO₂)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {previousMonthData.map((row) => (
+                    <TableRow key={row.date}>
+                      <TableCell className="font-medium">{row.date}</TableCell>
+                      <TableCell className="text-right">£{row.savings.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{row.carbonSavings.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
@@ -712,6 +733,31 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold mb-3">Data Table</h4>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Recommendation Type</TableHead>
+                    <TableHead className="text-right">Total Savings (£)</TableHead>
+                    <TableHead className="text-right">Investment/Opportunity (£)</TableHead>
+                    <TableHead className="text-right">Carbon Savings (kg)</TableHead>
+                    <TableHead className="text-right">Count</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {previousMonthRecStats.map((row) => (
+                    <TableRow key={row.type}>
+                      <TableCell className="font-medium">{row.type}</TableCell>
+                      <TableCell className="text-right">£{row.totalSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                      <TableCell className="text-right">£{row.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                      <TableCell className="text-right">{row.totalCarbonSavings.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{row.count}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
