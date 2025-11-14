@@ -43,7 +43,15 @@ async function fetchCarbonData(): Promise<{ sites: SiteData[] }> {
     throw new Error(`Failed to fetch carbon data: ${response.statusText}`);
   }
 
-  return await response.json();
+  const data = await response.json();
+  console.log("Received data structure:", JSON.stringify(data).substring(0, 200));
+  
+  // The API returns { sites: [...] } directly
+  if (!data.sites || !Array.isArray(data.sites)) {
+    throw new Error(`Invalid data structure received: ${JSON.stringify(data).substring(0, 100)}`);
+  }
+  
+  return data;
 }
 
 function generateDailyStatsWorkbook(sites: SiteData[]) {
@@ -85,14 +93,18 @@ function generateSiteStatsWorkbook(sites: SiteData[]) {
 
 async function generateChartImage(chartConfig: any): Promise<Uint8Array> {
   const chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
-  console.log("Generating chart from QuickChart.io...");
+  console.log("Generating chart from QuickChart.io:", chartUrl.substring(0, 100) + "...");
   
   const response = await fetch(chartUrl);
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`Failed to generate chart: ${response.statusText}`, errorText);
     throw new Error(`Failed to generate chart: ${response.statusText}`);
   }
   
-  return new Uint8Array(await response.arrayBuffer());
+  const arrayBuffer = await response.arrayBuffer();
+  console.log("Chart generated successfully, size:", arrayBuffer.byteLength);
+  return new Uint8Array(arrayBuffer);
 }
 
 async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
@@ -198,9 +210,13 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   };
 
   // Generate chart images
+  console.log("Generating scores chart...");
   const scoresImage = await generateChartImage(scoresChartConfig);
+  console.log("Generating recommendations chart...");
   const recsImage = await generateChartImage(recsChartConfig);
+  console.log("Generating costs chart...");
   const costsImage = await generateChartImage(costsChartConfig);
+  console.log("All charts generated successfully");
 
   // Add title page
   doc.setFontSize(24);
@@ -211,6 +227,9 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   
   // Convert Uint8Array to base64 for jsPDF
   const arrayBufferToBase64 = (buffer: Uint8Array) => {
+    if (!buffer || buffer.length === 0) {
+      throw new Error("Buffer is empty or undefined");
+    }
     let binary = '';
     const bytes = new Uint8Array(buffer);
     for (let i = 0; i < bytes.byteLength; i++) {
@@ -218,18 +237,28 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
     }
     return btoa(binary);
   };
+  
+  console.log("Converting images to base64...");
+  const scoresBase64 = arrayBufferToBase64(scoresImage);
+  const recsBase64 = arrayBufferToBase64(recsImage);
+  const costsBase64 = arrayBufferToBase64(costsImage);
 
   // Add first chart
+  console.log("Adding scores chart to PDF...");
   doc.addPage();
-  doc.addImage(`data:image/png;base64,${arrayBufferToBase64(scoresImage)}`, 'PNG', 10, 10, 190, 100);
+  doc.addImage(`data:image/png;base64,${scoresBase64}`, 'PNG', 10, 10, 190, 100);
 
   // Add second chart
+  console.log("Adding recommendations chart to PDF...");
   doc.addPage();
-  doc.addImage(`data:image/png;base64,${arrayBufferToBase64(recsImage)}`, 'PNG', 10, 10, 190, 100);
+  doc.addImage(`data:image/png;base64,${recsBase64}`, 'PNG', 10, 10, 190, 100);
 
   // Add third chart
+  console.log("Adding costs chart to PDF...");
   doc.addPage();
-  doc.addImage(`data:image/png;base64,${arrayBufferToBase64(costsImage)}`, 'PNG', 10, 10, 190, 100);
+  doc.addImage(`data:image/png;base64,${costsBase64}`, 'PNG', 10, 10, 190, 100);
+  
+  console.log("PDF generation complete");
 
   // Return as base64
   return doc.output('datauristring').split(',')[1];
