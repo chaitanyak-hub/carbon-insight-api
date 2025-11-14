@@ -310,16 +310,74 @@ async function generateChartImage(chartConfig: any): Promise<Uint8Array> {
   return new Uint8Array(arrayBuffer);
 }
 
+// Helper to get date ranges
+const getDateRanges = () => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  // Week starts on Wednesday
+  const dayOfWeek = now.getDay();
+  const daysFromWednesday = (dayOfWeek + 4) % 7;
+  const thisWeekStart = new Date(today);
+  thisWeekStart.setDate(thisWeekStart.getDate() - daysFromWednesday);
+  
+  return {
+    today: { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) },
+    yesterday: { start: yesterday, end: new Date(yesterday.getTime() + 24 * 60 * 60 * 1000 - 1) },
+    thisWeek: { start: thisWeekStart, end: today },
+  };
+};
+
+// Helper to filter and group sites by agent
+const filterAndGroupSitesByAgent = (sites: SiteData[], startDate?: Date, endDate?: Date) => {
+  const agentStats = new Map<string, { sites: number; contacts: Set<string>; interactions: number }>();
+  
+  sites.forEach(site => {
+    if (site.site_status !== 'ACTIVE') return;
+    if (!site.agent_name) return;
+    
+    if (startDate && endDate && site.onboard_date) {
+      const siteDate = new Date(site.onboard_date);
+      if (siteDate < startDate || siteDate > endDate) return;
+    }
+    
+    const agentName = formatAgentName(site.agent_name);
+    if (!agentStats.has(agentName)) {
+      agentStats.set(agentName, { sites: 0, contacts: new Set(), interactions: 0 });
+    }
+    
+    const stats = agentStats.get(agentName)!;
+    stats.sites++;
+    if (site.contact_email) stats.contacts.add(site.contact_email);
+    if (site.logged_in_contacts && site.logged_in_contacts > 0) stats.interactions++;
+  });
+  
+  return Array.from(agentStats.entries()).map(([name, stats]) => ({
+    name,
+    sites: stats.sites,
+    uniqueContacts: stats.contacts.size,
+    customerInteraction: stats.interactions,
+  }));
+};
+
 async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   console.log("Generating PDF with charts...");
   
   const doc = new jsPDF();
+  const dateRanges = getDateRanges();
   
-  // Calculate team stats for charts
+  // Generate data for each chart type
+  const todayData = filterAndGroupSitesByAgent(sites, dateRanges.today.start, dateRanges.today.end);
+  const yesterdayData = filterAndGroupSitesByAgent(sites, dateRanges.yesterday.start, dateRanges.yesterday.end);
+  const thisWeekData = filterAndGroupSitesByAgent(sites, dateRanges.thisWeek.start, dateRanges.thisWeek.end);
+  const allActiveSitesData = filterAndGroupSitesByAgent(sites);
+  
+  // Calculate team stats
   const teamStats = new Map<string, { 
     totalSites: number; 
     totalSavings: number; 
-    totalCarbonSavings: number; 
     totalCost: number;
     uniqueCustomers: Set<string>;
     interactions: number;
@@ -333,7 +391,6 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
       teamStats.set(team, {
         totalSites: 0,
         totalSavings: 0,
-        totalCarbonSavings: 0,
         totalCost: 0,
         uniqueCustomers: new Set(),
         interactions: 0,
@@ -346,7 +403,6 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
     if (site.recommendations && Array.isArray(site.recommendations)) {
       site.recommendations.forEach((rec: any) => {
         stats.totalSavings += rec.potential_savings || 0;
-        stats.totalCarbonSavings += rec.potential_carbon_savings || 0;
         stats.totalCost += rec.upgrade_cost || 0;
       });
     }
@@ -361,20 +417,120 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   });
 
   const teamNames = Array.from(teamStats.keys());
-  const sites_count = teamNames.map(team => teamStats.get(team)!.totalSites);
-  const savings = teamNames.map(team => teamStats.get(team)!.totalSavings);
-  const costs = teamNames.map(team => teamStats.get(team)!.totalCost);
-  const customers = teamNames.map(team => teamStats.get(team)!.uniqueCustomers.size);
-  const interactions = teamNames.map(team => teamStats.get(team)!.interactions);
+  const team_sites = teamNames.map(team => teamStats.get(team)!.totalSites);
+  const team_savings = teamNames.map(team => teamStats.get(team)!.totalSavings);
+  const team_costs = teamNames.map(team => teamStats.get(team)!.totalCost);
+  const team_customers = teamNames.map(team => teamStats.get(team)!.uniqueCustomers.size);
+  const team_interactions = teamNames.map(team => teamStats.get(team)!.interactions);
 
-  // Chart 1: Sites by Team
-  const sitesChartConfig = {
+  // Chart 1: Today
+  const todayChartConfig = {
+    type: 'bar',
+    data: {
+      labels: todayData.map(d => d.name),
+      datasets: [{
+        label: 'Sites Added Today',
+        data: todayData.map(d => d.sites),
+        backgroundColor: 'rgba(255, 87, 51, 0.8)',
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: 'Sites Added Today',
+        fontSize: 18,
+      },
+      scales: {
+        yAxes: [{
+          ticks: { beginAtZero: true }
+        }]
+      }
+    }
+  };
+
+  // Chart 2: Yesterday
+  const yesterdayChartConfig = {
+    type: 'bar',
+    data: {
+      labels: yesterdayData.map(d => d.name),
+      datasets: [{
+        label: 'Sites Added Yesterday',
+        data: yesterdayData.map(d => d.sites),
+        backgroundColor: 'rgba(255, 87, 51, 0.8)',
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: 'Sites Added Yesterday',
+        fontSize: 18,
+      },
+      scales: {
+        yAxes: [{
+          ticks: { beginAtZero: true }
+        }]
+      }
+    }
+  };
+
+  // Chart 3: This Week
+  const thisWeekChartConfig = {
+    type: 'bar',
+    data: {
+      labels: thisWeekData.map(d => d.name),
+      datasets: [{
+        label: 'Sites This Week (Wed-Tue)',
+        data: thisWeekData.map(d => d.sites),
+        backgroundColor: 'rgba(255, 87, 51, 0.8)',
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: 'Sites This Week (Wednesday to Tuesday)',
+        fontSize: 18,
+      },
+      scales: {
+        yAxes: [{
+          ticks: { beginAtZero: true }
+        }]
+      }
+    }
+  };
+
+  // Chart 4: All Active Sites by Agent
+  const allSitesChartConfig = {
+    type: 'bar',
+    data: {
+      labels: allActiveSitesData.map(d => d.name),
+      datasets: [{
+        label: 'All Active Sites',
+        data: allActiveSitesData.map(d => d.sites),
+        backgroundColor: 'rgba(255, 87, 51, 0.8)',
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: 'All Active Sites by Agent',
+        fontSize: 18,
+      },
+      scales: {
+        yAxes: [{
+          ticks: { beginAtZero: true }
+        }]
+      }
+    }
+  };
+
+  // Chart 5: Sites by Team
+  const teamSitesChartConfig = {
     type: 'bar',
     data: {
       labels: teamNames,
       datasets: [{
-        label: 'Total Sites',
-        data: sites_count,
+        label: 'Total Sites by Team',
+        data: team_sites,
         backgroundColor: 'rgba(139, 92, 246, 0.8)',
       }]
     },
@@ -392,14 +548,14 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
     }
   };
 
-  // Chart 2: Total Savings by Team
-  const savingsChartConfig = {
+  // Chart 6: Total Savings by Team
+  const teamSavingsChartConfig = {
     type: 'bar',
     data: {
       labels: teamNames,
       datasets: [{
         label: 'Total Savings (£)',
-        data: savings,
+        data: team_savings,
         backgroundColor: 'rgba(34, 197, 94, 0.8)',
       }]
     },
@@ -417,14 +573,14 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
     }
   };
 
-  // Chart 3: Total Investment/Cost by Team
-  const costsChartConfig = {
+  // Chart 7: Total Investment/Cost by Team
+  const teamCostsChartConfig = {
     type: 'bar',
     data: {
       labels: teamNames,
       datasets: [{
         label: 'Total Investment/Cost (£)',
-        data: costs,
+        data: team_costs,
         backgroundColor: 'rgba(239, 68, 68, 0.8)',
       }]
     },
@@ -442,14 +598,14 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
     }
   };
 
-  // Chart 4: Unique Customers by Team
-  const customersChartConfig = {
+  // Chart 8: Unique Customers by Team
+  const teamCustomersChartConfig = {
     type: 'bar',
     data: {
       labels: teamNames,
       datasets: [{
         label: 'Unique Customers',
-        data: customers,
+        data: team_customers,
         backgroundColor: 'rgba(59, 130, 246, 0.8)',
       }]
     },
@@ -467,14 +623,14 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
     }
   };
 
-  // Chart 5: Interactions by Team
-  const interactionsChartConfig = {
+  // Chart 9: Interactions by Team
+  const teamInteractionsChartConfig = {
     type: 'bar',
     data: {
       labels: teamNames,
       datasets: [{
         label: 'Interactions',
-        data: interactions,
+        data: team_interactions,
         backgroundColor: 'rgba(168, 85, 247, 0.8)',
       }]
     },
@@ -493,16 +649,24 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   };
 
   // Generate chart images
-  console.log("Generating sites chart...");
-  const sitesImage = await generateChartImage(sitesChartConfig);
-  console.log("Generating savings chart...");
-  const savingsImage = await generateChartImage(savingsChartConfig);
-  console.log("Generating costs chart...");
-  const costsImage = await generateChartImage(costsChartConfig);
-  console.log("Generating customers chart...");
-  const customersImage = await generateChartImage(customersChartConfig);
-  console.log("Generating interactions chart...");
-  const interactionsImage = await generateChartImage(interactionsChartConfig);
+  console.log("Generating today chart...");
+  const todayImage = await generateChartImage(todayChartConfig);
+  console.log("Generating yesterday chart...");
+  const yesterdayImage = await generateChartImage(yesterdayChartConfig);
+  console.log("Generating this week chart...");
+  const thisWeekImage = await generateChartImage(thisWeekChartConfig);
+  console.log("Generating all sites chart...");
+  const allSitesImage = await generateChartImage(allSitesChartConfig);
+  console.log("Generating team sites chart...");
+  const teamSitesImage = await generateChartImage(teamSitesChartConfig);
+  console.log("Generating team savings chart...");
+  const teamSavingsImage = await generateChartImage(teamSavingsChartConfig);
+  console.log("Generating team costs chart...");
+  const teamCostsImage = await generateChartImage(teamCostsChartConfig);
+  console.log("Generating team customers chart...");
+  const teamCustomersImage = await generateChartImage(teamCustomersChartConfig);
+  console.log("Generating team interactions chart...");
+  const teamInteractionsImage = await generateChartImage(teamInteractionsChartConfig);
   console.log("All charts generated successfully");
 
   // Add title page
@@ -526,36 +690,52 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   };
   
   console.log("Converting images to base64...");
-  const sitesBase64 = arrayBufferToBase64(sitesImage);
-  const savingsBase64 = arrayBufferToBase64(savingsImage);
-  const costsBase64 = arrayBufferToBase64(costsImage);
-  const customersBase64 = arrayBufferToBase64(customersImage);
-  const interactionsBase64 = arrayBufferToBase64(interactionsImage);
+  const todayBase64 = arrayBufferToBase64(todayImage);
+  const yesterdayBase64 = arrayBufferToBase64(yesterdayImage);
+  const thisWeekBase64 = arrayBufferToBase64(thisWeekImage);
+  const allSitesBase64 = arrayBufferToBase64(allSitesImage);
+  const teamSitesBase64 = arrayBufferToBase64(teamSitesImage);
+  const teamSavingsBase64 = arrayBufferToBase64(teamSavingsImage);
+  const teamCostsBase64 = arrayBufferToBase64(teamCostsImage);
+  const teamCustomersBase64 = arrayBufferToBase64(teamCustomersImage);
+  const teamInteractionsBase64 = arrayBufferToBase64(teamInteractionsImage);
 
-  // Add first chart
-  console.log("Adding sites chart to PDF...");
+  // Add charts
+  console.log("Adding today chart to PDF...");
   doc.addPage();
-  doc.addImage(`data:image/png;base64,${sitesBase64}`, 'PNG', 10, 10, 190, 100);
+  doc.addImage(`data:image/png;base64,${todayBase64}`, 'PNG', 10, 10, 190, 100);
 
-  // Add second chart
-  console.log("Adding savings chart to PDF...");
+  console.log("Adding yesterday chart to PDF...");
   doc.addPage();
-  doc.addImage(`data:image/png;base64,${savingsBase64}`, 'PNG', 10, 10, 190, 100);
+  doc.addImage(`data:image/png;base64,${yesterdayBase64}`, 'PNG', 10, 10, 190, 100);
 
-  // Add third chart
-  console.log("Adding costs chart to PDF...");
+  console.log("Adding this week chart to PDF...");
   doc.addPage();
-  doc.addImage(`data:image/png;base64,${costsBase64}`, 'PNG', 10, 10, 190, 100);
+  doc.addImage(`data:image/png;base64,${thisWeekBase64}`, 'PNG', 10, 10, 190, 100);
 
-  // Add fourth chart
-  console.log("Adding customers chart to PDF...");
+  console.log("Adding all sites chart to PDF...");
   doc.addPage();
-  doc.addImage(`data:image/png;base64,${customersBase64}`, 'PNG', 10, 10, 190, 100);
+  doc.addImage(`data:image/png;base64,${allSitesBase64}`, 'PNG', 10, 10, 190, 100);
 
-  // Add fifth chart
-  console.log("Adding interactions chart to PDF...");
+  console.log("Adding team sites chart to PDF...");
   doc.addPage();
-  doc.addImage(`data:image/png;base64,${interactionsBase64}`, 'PNG', 10, 10, 190, 100);
+  doc.addImage(`data:image/png;base64,${teamSitesBase64}`, 'PNG', 10, 10, 190, 100);
+
+  console.log("Adding team savings chart to PDF...");
+  doc.addPage();
+  doc.addImage(`data:image/png;base64,${teamSavingsBase64}`, 'PNG', 10, 10, 190, 100);
+
+  console.log("Adding team costs chart to PDF...");
+  doc.addPage();
+  doc.addImage(`data:image/png;base64,${teamCostsBase64}`, 'PNG', 10, 10, 190, 100);
+
+  console.log("Adding team customers chart to PDF...");
+  doc.addPage();
+  doc.addImage(`data:image/png;base64,${teamCustomersBase64}`, 'PNG', 10, 10, 190, 100);
+
+  console.log("Adding team interactions chart to PDF...");
+  doc.addPage();
+  doc.addImage(`data:image/png;base64,${teamInteractionsBase64}`, 'PNG', 10, 10, 190, 100);
   
   console.log("PDF generation complete");
 
