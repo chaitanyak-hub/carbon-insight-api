@@ -13,21 +13,26 @@ const corsHeaders = {
 };
 
 interface SiteData {
-  id: string;
-  name: string;
-  organisation: string;
-  team: string;
-  weeklyData?: Array<{
-    week: string;
-    totalScore: number;
-    totalRecommendations: number;
-    totalCost: number;
+  site_name?: string;
+  agent_name?: string;
+  site_status?: string;
+  onboard_date?: string;
+  contact_email?: string;
+  recommendations?: Array<{
+    potential_savings?: number;
+    potential_carbon_savings?: number;
+    potential_cost?: number;
   }>;
-  allTimeStats?: {
-    totalScore: number;
-    totalRecommendations: number;
-    totalCost: number;
-  };
+  [key: string]: any;
+}
+
+interface AgentStats {
+  agentName: string;
+  team: string;
+  totalSites: number;
+  totalSavings: number;
+  totalCarbonSavings: number;
+  totalCost: number;
 }
 
 async function fetchCarbonData(): Promise<{ sites: SiteData[] }> {
@@ -54,39 +59,138 @@ async function fetchCarbonData(): Promise<{ sites: SiteData[] }> {
   return { sites: responseData.data.sites };
 }
 
+const getTeamForAgent = (agentEmail: string): string => {
+  const TEAMS: any = {
+    "amanda.adams@edfenergy.com": "Team Adam Parkins",
+    "ben.houston@edfenergy.com": "Team Adam Parkins",
+    "danny.cotton@edfenergy.com": "Team Adam Parkins",
+    "darren.manning@edfenergy.com": "Team Adam Parkins",
+    "david.maddox@edfenergy.com": "Team Adam Parkins",
+    "dean.lipscombe@edfenergy.com": "Team Adam Parkins",
+    "sarina.montesini@edfenergy.com": "Team Adam Parkins",
+    "sophie.michael@edfenergy.com": "Team Adam Parkins",
+    "amy.randall@edfenergy.com": "Team Rikki Nealgrove",
+    "chris.langridge@edfenergy.com": "Team Rikki Nealgrove",
+    "daniel.kearney@edfenergy.com": "Team Rikki Nealgrove",
+    "catherine.hendon@edfenergy.com": "Team Rikki Nealgrove",
+    "jennifer.hall@edfenergy.com": "Team Rikki Nealgrove",
+    "luke.hudson-young@edfenergy.com": "Team Rikki Nealgrove",
+    "matt.fricker@edfenergy.com": "Team Rikki Nealgrove",
+    "mitchell.dawes@edfenergy.com": "Team Rikki Nealgrove",
+    "sophie.kingston@edfenergy.com": "Team Rikki Nealgrove",
+    "agata.siadura@edfenergy.com": "Team Joe Green",
+    "andrew.tait@edfenergy.com": "Team Joe Green",
+    "emma.george@edfenergy.com": "Team Joe Green",
+    "grace.mitchell@edfenergy.com": "Team Joe Green",
+    "jack.jeffrey@edfenergy.com": "Team Joe Green",
+    "milchyas.ephrem@edfenergy.com": "Team Joe Green",
+    "pam.maglennon@edfenergy.com": "Team Joe Green",
+    "pete.emerson@edfenergy.com": "Team Joe Green",
+    "sam.smith@edfenergy.com": "Team Joe Green",
+    "thomas.oake@edfenergy.com": "Team Joe Green",
+    "david.monk@edfenergy.com": "Team Tuesday Jamieson",
+    "jenny.norris@edfenergy.com": "Team Tuesday Jamieson",
+    "kelly.howell@edfenergy.com": "Team Tuesday Jamieson",
+    "gwyn.lewis@edfenergy.com": "Team Tuesday Jamieson",
+    "lauren.wise@edfenergy.com": "Team Tuesday Jamieson",
+    "martin.house@edfenergy.com": "Team Tuesday Jamieson",
+    "ben.wybrow@edfenergy.com": "Team Tuesday Jamieson",
+    "carli.bird@edfenergy.com": "Team Tuesday Jamieson",
+    "orlando.nogueir@edfenergy.com": "Team Tuesday Jamieson",
+  };
+  
+  return TEAMS[agentEmail.toLowerCase()] || "Unknown Team";
+};
+
+const calculateSiteStats = (site: SiteData) => {
+  let totalSavings = 0;
+  let totalCarbonSavings = 0;
+  let totalCost = 0;
+  let recommendationCount = 0;
+  
+  if (site.recommendations && Array.isArray(site.recommendations)) {
+    recommendationCount = site.recommendations.length;
+    site.recommendations.forEach((rec: any) => {
+      totalSavings += rec.potential_savings || 0;
+      totalCarbonSavings += rec.potential_carbon_savings || 0;
+      totalCost += rec.potential_cost || 0;
+    });
+  }
+  
+  return { totalSavings, totalCarbonSavings, totalCost, recommendationCount };
+};
+
+const aggregateStatsByAgent = (sites: SiteData[]): AgentStats[] => {
+  const agentMap = new Map<string, AgentStats>();
+  
+  sites.forEach(site => {
+    if (!site.agent_name) return;
+    
+    const agentEmail = site.agent_name.toLowerCase();
+    const team = getTeamForAgent(agentEmail);
+    const stats = calculateSiteStats(site);
+    
+    if (!agentMap.has(agentEmail)) {
+      agentMap.set(agentEmail, {
+        agentName: agentEmail,
+        team,
+        totalSites: 0,
+        totalSavings: 0,
+        totalCarbonSavings: 0,
+        totalCost: 0,
+      });
+    }
+    
+    const agentStats = agentMap.get(agentEmail)!;
+    agentStats.totalSites++;
+    agentStats.totalSavings += stats.totalSavings;
+    agentStats.totalCarbonSavings += stats.totalCarbonSavings;
+    agentStats.totalCost += stats.totalCost;
+  });
+  
+  return Array.from(agentMap.values());
+};
+
 function generateDailyStatsWorkbook(sites: SiteData[]) {
-  const dailyData = sites.map(site => ({
-    'Site Name': site.name,
-    'Organisation': site.organisation,
-    'Team': site.team,
-    'Total Score': site.allTimeStats?.totalScore || 0,
-    'Total Recommendations': site.allTimeStats?.totalRecommendations || 0,
-    'Total Investment/Opportunity (£)': site.allTimeStats?.totalCost || 0,
+  const agentStats = aggregateStatsByAgent(sites);
+  
+  const dailyData = agentStats.map(agent => ({
+    'Agent': agent.agentName,
+    'Team': agent.team,
+    'Total Sites': agent.totalSites,
+    'Total Savings (£)': agent.totalSavings.toFixed(2),
+    'Total Carbon Savings (kg)': agent.totalCarbonSavings.toFixed(2),
+    'Total Cost (£)': agent.totalCost.toFixed(2),
   }));
 
   const ws = XLSX.utils.json_to_sheet(dailyData);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Daily Statistics");
+  XLSX.utils.book_append_sheet(wb, ws, "Agent Statistics");
   
   return XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
 }
 
 function generateSiteStatsWorkbook(sites: SiteData[]) {
-  const siteData = sites.flatMap(site => 
-    (site.weeklyData || []).map(week => ({
-      'Site Name': site.name,
-      'Organisation': site.organisation,
-      'Team': site.team,
-      'Week': week.week,
-      'Score': week.totalScore,
-      'Recommendations': week.totalRecommendations,
-      'Investment/Opportunity (£)': week.totalCost,
-    }))
-  );
+  const siteData = sites
+    .filter(site => site.site_status === 'ACTIVE')
+    .map(site => {
+      const stats = calculateSiteStats(site);
+      return {
+        'Site Name': site.site_name || 'Unknown',
+        'Agent': site.agent_name || 'Unknown',
+        'Team': site.agent_name ? getTeamForAgent(site.agent_name.toLowerCase()) : 'Unknown',
+        'Status': site.site_status || 'Unknown',
+        'Onboard Date': site.onboard_date || 'Unknown',
+        'Total Recommendations': stats.recommendationCount,
+        'Total Savings (£)': stats.totalSavings.toFixed(2),
+        'Total Carbon Savings (kg)': stats.totalCarbonSavings.toFixed(2),
+        'Total Cost (£)': stats.totalCost.toFixed(2),
+      };
+    });
 
   const ws = XLSX.utils.json_to_sheet(siteData);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Site Statistics");
+  XLSX.utils.book_append_sheet(wb, ws, "Site Details");
   
   return XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
 }
@@ -112,43 +216,46 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   
   const doc = new jsPDF();
   
-  // Calculate organization stats for charts
-  const orgStats = sites.reduce((acc, site) => {
-    if (!acc[site.organisation]) {
-      acc[site.organisation] = {
-        totalScore: 0,
-        totalRecommendations: 0,
+  // Calculate team stats for charts
+  const agentStats = aggregateStatsByAgent(sites);
+  
+  // Group by team
+  const teamStats = agentStats.reduce((acc, agent) => {
+    if (!acc[agent.team]) {
+      acc[agent.team] = {
+        totalSites: 0,
+        totalSavings: 0,
+        totalCarbonSavings: 0,
         totalCost: 0,
-        siteCount: 0,
       };
     }
-    acc[site.organisation].totalScore += site.allTimeStats?.totalScore || 0;
-    acc[site.organisation].totalRecommendations += site.allTimeStats?.totalRecommendations || 0;
-    acc[site.organisation].totalCost += site.allTimeStats?.totalCost || 0;
-    acc[site.organisation].siteCount += 1;
+    acc[agent.team].totalSites += agent.totalSites;
+    acc[agent.team].totalSavings += agent.totalSavings;
+    acc[agent.team].totalCarbonSavings += agent.totalCarbonSavings;
+    acc[agent.team].totalCost += agent.totalCost;
     return acc;
   }, {} as Record<string, any>);
 
-  const orgNames = Object.keys(orgStats);
-  const scores = orgNames.map(org => orgStats[org].totalScore);
-  const recommendations = orgNames.map(org => orgStats[org].totalRecommendations);
-  const costs = orgNames.map(org => orgStats[org].totalCost);
+  const teamNames = Object.keys(teamStats);
+  const sites_count = teamNames.map(team => teamStats[team].totalSites);
+  const savings = teamNames.map(team => teamStats[team].totalSavings);
+  const costs = teamNames.map(team => teamStats[team].totalCost);
 
-  // Chart 1: Organization Scores
-  const scoresChartConfig = {
+  // Chart 1: Sites by Team
+  const sitesChartConfig = {
     type: 'bar',
     data: {
-      labels: orgNames,
+      labels: teamNames,
       datasets: [{
-        label: 'Total Score',
-        data: scores,
+        label: 'Total Sites',
+        data: sites_count,
         backgroundColor: 'rgba(139, 92, 246, 0.8)',
       }]
     },
     options: {
       title: {
         display: true,
-        text: 'Organization Scores',
+        text: 'Sites by Team',
         fontSize: 18,
       },
       scales: {
@@ -159,21 +266,21 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
     }
   };
 
-  // Chart 2: Total Recommendations
-  const recsChartConfig = {
+  // Chart 2: Total Savings by Team
+  const savingsChartConfig = {
     type: 'bar',
     data: {
-      labels: orgNames,
+      labels: teamNames,
       datasets: [{
-        label: 'Total Recommendations',
-        data: recommendations,
+        label: 'Total Savings (£)',
+        data: savings,
         backgroundColor: 'rgba(34, 197, 94, 0.8)',
       }]
     },
     options: {
       title: {
         display: true,
-        text: 'Total Recommendations by Organization',
+        text: 'Total Savings by Team',
         fontSize: 18,
       },
       scales: {
@@ -184,13 +291,13 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
     }
   };
 
-  // Chart 3: Total Investment/Opportunity
+  // Chart 3: Total Investment/Cost by Team
   const costsChartConfig = {
     type: 'bar',
     data: {
-      labels: orgNames,
+      labels: teamNames,
       datasets: [{
-        label: 'Total Investment/Opportunity (£)',
+        label: 'Total Investment/Cost (£)',
         data: costs,
         backgroundColor: 'rgba(239, 68, 68, 0.8)',
       }]
@@ -198,7 +305,7 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
     options: {
       title: {
         display: true,
-        text: 'Total Investment/Opportunity by Organization',
+        text: 'Total Investment/Cost by Team',
         fontSize: 18,
       },
       scales: {
@@ -210,10 +317,10 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   };
 
   // Generate chart images
-  console.log("Generating scores chart...");
-  const scoresImage = await generateChartImage(scoresChartConfig);
-  console.log("Generating recommendations chart...");
-  const recsImage = await generateChartImage(recsChartConfig);
+  console.log("Generating sites chart...");
+  const sitesImage = await generateChartImage(sitesChartConfig);
+  console.log("Generating savings chart...");
+  const savingsImage = await generateChartImage(savingsChartConfig);
   console.log("Generating costs chart...");
   const costsImage = await generateChartImage(costsChartConfig);
   console.log("All charts generated successfully");
@@ -239,19 +346,19 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   };
   
   console.log("Converting images to base64...");
-  const scoresBase64 = arrayBufferToBase64(scoresImage);
-  const recsBase64 = arrayBufferToBase64(recsImage);
+  const sitesBase64 = arrayBufferToBase64(sitesImage);
+  const savingsBase64 = arrayBufferToBase64(savingsImage);
   const costsBase64 = arrayBufferToBase64(costsImage);
 
   // Add first chart
-  console.log("Adding scores chart to PDF...");
+  console.log("Adding sites chart to PDF...");
   doc.addPage();
-  doc.addImage(`data:image/png;base64,${scoresBase64}`, 'PNG', 10, 10, 190, 100);
+  doc.addImage(`data:image/png;base64,${sitesBase64}`, 'PNG', 10, 10, 190, 100);
 
   // Add second chart
-  console.log("Adding recommendations chart to PDF...");
+  console.log("Adding savings chart to PDF...");
   doc.addPage();
-  doc.addImage(`data:image/png;base64,${recsBase64}`, 'PNG', 10, 10, 190, 100);
+  doc.addImage(`data:image/png;base64,${savingsBase64}`, 'PNG', 10, 10, 190, 100);
 
   // Add third chart
   console.log("Adding costs chart to PDF...");
@@ -272,6 +379,18 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log("Starting daily report generation...");
     
+    // Parse request body to get email addresses
+    let recipients = ["chaitanya@perse.energy"]; // Default recipient
+    try {
+      const body = await req.json();
+      if (body.recipients && Array.isArray(body.recipients) && body.recipients.length > 0) {
+        recipients = body.recipients;
+        console.log(`Sending to custom recipients: ${recipients.join(", ")}`);
+      }
+    } catch (e) {
+      console.log("No custom recipients provided, using default");
+    }
+    
     // Fetch data
     const { sites } = await fetchCarbonData();
     console.log(`Fetched data for ${sites.length} sites`);
@@ -284,16 +403,27 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate PDF with charts
     const pdfBase64 = await generatePDFWithCharts(sites);
 
-    // Convert buffers to base64 for email attachments
-    const dailyStatsBase64 = btoa(String.fromCharCode(...new Uint8Array(dailyStatsExcel)));
-    const siteStatsBase64 = btoa(String.fromCharCode(...new Uint8Array(siteStatsExcel)));
+    // Convert buffers to base64 for email attachments (using chunked approach for large buffers)
+    const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      const chunkSize = 8192;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.slice(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+      }
+      return btoa(binary);
+    };
+
+    const dailyStatsBase64 = arrayBufferToBase64(dailyStatsExcel);
+    const siteStatsBase64 = arrayBufferToBase64(siteStatsExcel);
 
     console.log("Sending email with attachments...");
     
     // Send email with Resend
     const emailResponse = await resend.emails.send({
       from: "Carbon Reports <onboarding@resend.dev>",
-      to: ["chaitanya@perse.energy"],
+      to: recipients,
       subject: `Daily Carbon Data Report - ${new Date().toLocaleDateString()}`,
       html: `
         <h1>Daily Carbon Data Report</h1>
