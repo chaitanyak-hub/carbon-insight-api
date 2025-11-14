@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { EmailReportDialog } from "@/components/EmailReportDialog";
 
 const Index = () => {
   const [data, setData] = useState<SiteRecord[]>([]);
@@ -99,6 +100,9 @@ const Index = () => {
             <p className="text-lg text-muted-foreground">
               Carbon footprint and site activity monitoring
             </p>
+            <div className="flex justify-center pt-2">
+              <EmailReportDialog />
+            </div>
           </div>
 
           {/* Loading State */}
