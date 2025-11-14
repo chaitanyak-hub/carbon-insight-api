@@ -329,8 +329,8 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                       <td className="text-right p-2 text-foreground">{row.sites}</td>
                       <td className="text-right p-2 text-foreground">{row.customers}</td>
                       <td className="text-right p-2 text-foreground">{row.interactions}</td>
-                      <td className="text-right p-2 text-foreground">£{row.savings.toFixed(2)}</td>
-                      <td className="text-right p-2 text-foreground">{row.carbonSavings.toFixed(2)}</td>
+                      <td className="text-right p-2 text-foreground">£{row.savings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="text-right p-2 text-foreground">{row.carbonSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -389,8 +389,8 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                       <td className="text-right p-2 text-foreground">{row.sites}</td>
                       <td className="text-right p-2 text-foreground">{row.customers}</td>
                       <td className="text-right p-2 text-foreground">{row.interactions}</td>
-                      <td className="text-right p-2 text-foreground">£{row.savings.toFixed(2)}</td>
-                      <td className="text-right p-2 text-foreground">{row.carbonSavings.toFixed(2)}</td>
+                      <td className="text-right p-2 text-foreground">£{row.savings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="text-right p-2 text-foreground">{row.carbonSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -624,7 +624,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                       <td className="text-right p-2 text-foreground">{row.count}</td>
                       <td className="text-right p-2 text-foreground">£{row.totalSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       <td className="text-right p-2 text-foreground">£{row.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                      <td className="text-right p-2 text-foreground">{row.totalCarbonSavings.toFixed(2)}</td>
+                      <td className="text-right p-2 text-foreground">{row.totalCarbonSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     </tr>
                   ))}
                 </tbody>
