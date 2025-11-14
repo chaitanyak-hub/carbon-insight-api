@@ -18,21 +18,34 @@ interface SiteData {
   site_status?: string;
   onboard_date?: string;
   contact_email?: string;
+  contact_phone?: string;
+  contact_first_name?: string;
+  contact_last_name?: string;
+  company_name?: string;
+  siteAddress?: string;
+  display_name?: string;
+  logged_in_contacts?: number;
+  latest_contact_login?: string;
+  elecMeter?: any;
+  gasMeter?: any;
   recommendations?: Array<{
+    type?: string;
     potential_savings?: number;
     potential_carbon_savings?: number;
     potential_cost?: number;
+    upgrade_cost?: number;
+    payback_period?: number;
   }>;
   [key: string]: any;
 }
 
-interface AgentStats {
-  agentName: string;
-  team: string;
-  totalSites: number;
-  totalSavings: number;
-  totalCarbonSavings: number;
-  totalCost: number;
+interface DailyAgentStats {
+  date: string;
+  agent: string;
+  agentEmail: string;
+  sites: number;
+  uniqueCustomers: number;
+  interactions: number;
 }
 
 async function fetchCarbonData(): Promise<{ sites: SiteData[] }> {
@@ -102,95 +115,181 @@ const getTeamForAgent = (agentEmail: string): string => {
   return TEAMS[agentEmail.toLowerCase()] || "Unknown Team";
 };
 
-const calculateSiteStats = (site: SiteData) => {
-  let totalSavings = 0;
-  let totalCarbonSavings = 0;
-  let totalCost = 0;
-  let recommendationCount = 0;
-  
-  if (site.recommendations && Array.isArray(site.recommendations)) {
-    recommendationCount = site.recommendations.length;
-    site.recommendations.forEach((rec: any) => {
-      totalSavings += rec.potential_savings || 0;
-      totalCarbonSavings += rec.potential_carbon_savings || 0;
-      totalCost += rec.potential_cost || 0;
-    });
-  }
-  
-  return { totalSavings, totalCarbonSavings, totalCost, recommendationCount };
+// Helper function to format agent name
+const formatAgentName = (email: string): string => {
+  if (!email) return 'Unknown';
+  const name = email.split('@')[0];
+  return name.split('.').map(part => 
+    part.charAt(0).toUpperCase() + part.slice(1)
+  ).join(' ');
 };
 
-const aggregateStatsByAgent = (sites: SiteData[]): AgentStats[] => {
-  const agentMap = new Map<string, AgentStats>();
+// Helper function to format date as DD/MM/YYYY
+const formatDateDDMMYYYY = (dateString: string): string => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+// Helper functions for Site Statistics
+const extractMPAN = (record: any): string => {
+  if (record.elecMeter && typeof record.elecMeter === 'object') {
+    const mpans = Object.keys(record.elecMeter);
+    return mpans.length > 0 ? mpans.join(', ') : 'N/A';
+  }
+  return 'N/A';
+};
+
+const extractMPRN = (record: any): string => {
+  if (record.gasMeter && typeof record.gasMeter === 'object') {
+    const mprns = Object.keys(record.gasMeter);
+    return mprns.length > 0 ? mprns.join(', ') : 'N/A';
+  }
+  return 'N/A';
+};
+
+const formatRecommendations = (record: any): string => {
+  if (record.recommendations && Array.isArray(record.recommendations) && record.recommendations.length > 0) {
+    return record.recommendations
+      .filter((rec: any) => rec.potential_savings > 0)
+      .map((rec: any) => {
+        const parts = [
+          `Type: ${rec.type}`,
+          `Savings: £${rec.potential_savings.toFixed(2)}`,
+          `Cost: £${rec.upgrade_cost?.toFixed(2) || 0}`,
+          rec.payback_period !== null && rec.payback_period !== undefined ? `Payback: ${rec.payback_period.toFixed(2)} years` : 'Payback: N/A',
+        ];
+        return `[${parts.join(' | ')}]`;
+      })
+      .join(' ');
+  }
+  return 'N/A';
+};
+
+const calculateTotalSavings = (record: any): number => {
+  if (record.recommendations && Array.isArray(record.recommendations) && record.recommendations.length > 0) {
+    return record.recommendations
+      .filter((rec: any) => rec.potential_savings > 0)
+      .reduce((total: number, rec: any) => total + (rec.potential_savings || 0), 0);
+  }
+  return 0;
+};
+
+// Generate daily statistics matching WeeklyStatsTable format
+const generateDailyStatsByAgent = (sites: SiteData[]): DailyAgentStats[] => {
+  const dailyGroups = new Map<string, Map<string, { sites: number; contacts: Set<string>; interactions: number; agentEmail: string }>>();
   
-  sites.forEach(site => {
-    if (!site.agent_name) return;
+  sites.forEach(record => {
+    if (!record.onboard_date) return;
+    if (record.site_status !== 'ACTIVE') return;
     
-    const agentEmail = site.agent_name.toLowerCase();
-    const team = getTeamForAgent(agentEmail);
-    const stats = calculateSiteStats(site);
+    const date = new Date(record.onboard_date).toISOString().split('T')[0];
+    const agentKey = formatAgentName(record.agent_name || '');
     
-    if (!agentMap.has(agentEmail)) {
-      agentMap.set(agentEmail, {
-        agentName: agentEmail,
-        team,
-        totalSites: 0,
-        totalSavings: 0,
-        totalCarbonSavings: 0,
-        totalCost: 0,
+    if (!dailyGroups.has(date)) {
+      dailyGroups.set(date, new Map());
+    }
+    
+    const dateGroup = dailyGroups.get(date)!;
+    if (!dateGroup.has(agentKey)) {
+      dateGroup.set(agentKey, { 
+        sites: 0, 
+        contacts: new Set(), 
+        interactions: 0,
+        agentEmail: record.agent_name || ''
       });
     }
     
-    const agentStats = agentMap.get(agentEmail)!;
-    agentStats.totalSites++;
-    agentStats.totalSavings += stats.totalSavings;
-    agentStats.totalCarbonSavings += stats.totalCarbonSavings;
-    agentStats.totalCost += stats.totalCost;
+    const agentData = dateGroup.get(agentKey)!;
+    agentData.sites++;
+    
+    if (record.contact_email) {
+      agentData.contacts.add(record.contact_email);
+    }
+    
+    if (record.logged_in_contacts && record.logged_in_contacts > 0) {
+      agentData.interactions++;
+    }
   });
   
-  return Array.from(agentMap.values());
+  const tableData: DailyAgentStats[] = [];
+  dailyGroups.forEach((agents, date) => {
+    agents.forEach((data, agent) => {
+      tableData.push({
+        date,
+        agent,
+        agentEmail: data.agentEmail,
+        sites: data.sites,
+        uniqueCustomers: data.contacts.size,
+        interactions: data.interactions,
+      });
+    });
+  });
+  
+  tableData.sort((a, b) => {
+    if (a.date !== b.date) {
+      return b.date.localeCompare(a.date);
+    }
+    return a.agent.localeCompare(b.agent);
+  });
+  
+  return tableData;
 };
 
+// Generate Daily Statistics workbook matching WeeklyStatsTable export format
 function generateDailyStatsWorkbook(sites: SiteData[]) {
-  const agentStats = aggregateStatsByAgent(sites);
+  const dailyStats = generateDailyStatsByAgent(sites);
   
-  const dailyData = agentStats.map(agent => ({
-    'Agent': agent.agentName,
-    'Team': agent.team,
-    'Total Sites': agent.totalSites,
-    'Total Savings (£)': agent.totalSavings.toFixed(2),
-    'Total Carbon Savings (kg)': agent.totalCarbonSavings.toFixed(2),
-    'Total Cost (£)': agent.totalCost.toFixed(2),
-  }));
+  const exportData = dailyStats.map(row => {
+    const interactionPercentage = row.uniqueCustomers > 0 
+      ? Math.round((row.interactions / row.uniqueCustomers) * 100)
+      : 0;
+    
+    return {
+      'Date': formatDateDDMMYYYY(row.date),
+      'Agent': row.agent,
+      'Team Leader': getTeamForAgent(row.agentEmail.toLowerCase()),
+      'Sites Added': row.sites,
+      'Unique Customers': row.uniqueCustomers,
+      'Interactions': row.interactions,
+      'Interaction %': `${interactionPercentage}%`,
+    };
+  });
 
-  const ws = XLSX.utils.json_to_sheet(dailyData);
+  const ws = XLSX.utils.json_to_sheet(exportData);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Agent Statistics");
+  XLSX.utils.book_append_sheet(wb, ws, "Daily Statistics");
   
   return XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
 }
 
+// Generate Site Statistics workbook matching SiteStatisticsTable export format
 function generateSiteStatsWorkbook(sites: SiteData[]) {
   const siteData = sites
     .filter(site => site.site_status === 'ACTIVE')
-    .map(site => {
-      const stats = calculateSiteStats(site);
-      return {
-        'Site Name': site.site_name || 'Unknown',
-        'Agent': site.agent_name || 'Unknown',
-        'Team': site.agent_name ? getTeamForAgent(site.agent_name.toLowerCase()) : 'Unknown',
-        'Status': site.site_status || 'Unknown',
-        'Onboard Date': site.onboard_date || 'Unknown',
-        'Total Recommendations': stats.recommendationCount,
-        'Total Savings (£)': stats.totalSavings.toFixed(2),
-        'Total Carbon Savings (kg)': stats.totalCarbonSavings.toFixed(2),
-        'Total Cost (£)': stats.totalCost.toFixed(2),
-      };
-    });
+    .map(record => ({
+      'Site Address': record.siteAddress || record.display_name || 'N/A',
+      'Agent Name': formatAgentName(record.agent_name || 'Unknown'),
+      'Site Added Date': formatDateDDMMYYYY(record.onboard_date || ''),
+      'Site Status': record.site_status || 'N/A',
+      'Customer Email': record.contact_email || 'N/A',
+      'Contact Phone': record.contact_phone || 'N/A',
+      'First Name': record.contact_first_name || 'N/A',
+      'Last Name': record.contact_last_name || 'N/A',
+      'MPAN': extractMPAN(record),
+      'MPRN': extractMPRN(record),
+      'Company Name': record.company_name || 'N/A',
+      'Recommendations': formatRecommendations(record),
+      'Total Savings': `£${calculateTotalSavings(record).toFixed(2)}`,
+      'Interaction Status': record.latest_contact_login ? 'Yes' : 'No',
+    }));
 
   const ws = XLSX.utils.json_to_sheet(siteData);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Site Details");
+  XLSX.utils.book_append_sheet(wb, ws, "Site Statistics");
   
   return XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
 }
@@ -217,29 +316,56 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   const doc = new jsPDF();
   
   // Calculate team stats for charts
-  const agentStats = aggregateStatsByAgent(sites);
+  const teamStats = new Map<string, { 
+    totalSites: number; 
+    totalSavings: number; 
+    totalCarbonSavings: number; 
+    totalCost: number;
+    uniqueCustomers: Set<string>;
+    interactions: number;
+  }>();
   
-  // Group by team
-  const teamStats = agentStats.reduce((acc, agent) => {
-    if (!acc[agent.team]) {
-      acc[agent.team] = {
+  sites.forEach(site => {
+    if (!site.agent_name || site.site_status !== 'ACTIVE') return;
+    
+    const team = getTeamForAgent(site.agent_name.toLowerCase());
+    if (!teamStats.has(team)) {
+      teamStats.set(team, {
         totalSites: 0,
         totalSavings: 0,
         totalCarbonSavings: 0,
         totalCost: 0,
-      };
+        uniqueCustomers: new Set(),
+        interactions: 0,
+      });
     }
-    acc[agent.team].totalSites += agent.totalSites;
-    acc[agent.team].totalSavings += agent.totalSavings;
-    acc[agent.team].totalCarbonSavings += agent.totalCarbonSavings;
-    acc[agent.team].totalCost += agent.totalCost;
-    return acc;
-  }, {} as Record<string, any>);
+    
+    const stats = teamStats.get(team)!;
+    stats.totalSites++;
+    
+    if (site.recommendations && Array.isArray(site.recommendations)) {
+      site.recommendations.forEach((rec: any) => {
+        stats.totalSavings += rec.potential_savings || 0;
+        stats.totalCarbonSavings += rec.potential_carbon_savings || 0;
+        stats.totalCost += rec.upgrade_cost || 0;
+      });
+    }
+    
+    if (site.contact_email) {
+      stats.uniqueCustomers.add(site.contact_email);
+    }
+    
+    if (site.logged_in_contacts && site.logged_in_contacts > 0) {
+      stats.interactions++;
+    }
+  });
 
-  const teamNames = Object.keys(teamStats);
-  const sites_count = teamNames.map(team => teamStats[team].totalSites);
-  const savings = teamNames.map(team => teamStats[team].totalSavings);
-  const costs = teamNames.map(team => teamStats[team].totalCost);
+  const teamNames = Array.from(teamStats.keys());
+  const sites_count = teamNames.map(team => teamStats.get(team)!.totalSites);
+  const savings = teamNames.map(team => teamStats.get(team)!.totalSavings);
+  const costs = teamNames.map(team => teamStats.get(team)!.totalCost);
+  const customers = teamNames.map(team => teamStats.get(team)!.uniqueCustomers.size);
+  const interactions = teamNames.map(team => teamStats.get(team)!.interactions);
 
   // Chart 1: Sites by Team
   const sitesChartConfig = {
@@ -316,6 +442,56 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
     }
   };
 
+  // Chart 4: Unique Customers by Team
+  const customersChartConfig = {
+    type: 'bar',
+    data: {
+      labels: teamNames,
+      datasets: [{
+        label: 'Unique Customers',
+        data: customers,
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: 'Unique Customers by Team',
+        fontSize: 18,
+      },
+      scales: {
+        yAxes: [{
+          ticks: { beginAtZero: true }
+        }]
+      }
+    }
+  };
+
+  // Chart 5: Interactions by Team
+  const interactionsChartConfig = {
+    type: 'bar',
+    data: {
+      labels: teamNames,
+      datasets: [{
+        label: 'Interactions',
+        data: interactions,
+        backgroundColor: 'rgba(168, 85, 247, 0.8)',
+      }]
+    },
+    options: {
+      title: {
+        display: true,
+        text: 'Interactions by Team',
+        fontSize: 18,
+      },
+      scales: {
+        yAxes: [{
+          ticks: { beginAtZero: true }
+        }]
+      }
+    }
+  };
+
   // Generate chart images
   console.log("Generating sites chart...");
   const sitesImage = await generateChartImage(sitesChartConfig);
@@ -323,6 +499,10 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   const savingsImage = await generateChartImage(savingsChartConfig);
   console.log("Generating costs chart...");
   const costsImage = await generateChartImage(costsChartConfig);
+  console.log("Generating customers chart...");
+  const customersImage = await generateChartImage(customersChartConfig);
+  console.log("Generating interactions chart...");
+  const interactionsImage = await generateChartImage(interactionsChartConfig);
   console.log("All charts generated successfully");
 
   // Add title page
@@ -349,6 +529,8 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   const sitesBase64 = arrayBufferToBase64(sitesImage);
   const savingsBase64 = arrayBufferToBase64(savingsImage);
   const costsBase64 = arrayBufferToBase64(costsImage);
+  const customersBase64 = arrayBufferToBase64(customersImage);
+  const interactionsBase64 = arrayBufferToBase64(interactionsImage);
 
   // Add first chart
   console.log("Adding sites chart to PDF...");
@@ -364,6 +546,16 @@ async function generatePDFWithCharts(sites: SiteData[]): Promise<string> {
   console.log("Adding costs chart to PDF...");
   doc.addPage();
   doc.addImage(`data:image/png;base64,${costsBase64}`, 'PNG', 10, 10, 190, 100);
+
+  // Add fourth chart
+  console.log("Adding customers chart to PDF...");
+  doc.addPage();
+  doc.addImage(`data:image/png;base64,${customersBase64}`, 'PNG', 10, 10, 190, 100);
+
+  // Add fifth chart
+  console.log("Adding interactions chart to PDF...");
+  doc.addPage();
+  doc.addImage(`data:image/png;base64,${interactionsBase64}`, 'PNG', 10, 10, 190, 100);
   
   console.log("PDF generation complete");
 
