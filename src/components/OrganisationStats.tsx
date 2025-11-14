@@ -241,6 +241,29 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 <Bar dataKey="interactions" fill="url(#colorInteractions)" name="Interactions" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold mb-3">Data Table</h4>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Sites Added</TableHead>
+                    <TableHead className="text-right">Unique Customers</TableHead>
+                    <TableHead className="text-right">Interactions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {previousMonthData.map((row) => (
+                    <TableRow key={row.date}>
+                      <TableCell className="font-medium">{row.date}</TableCell>
+                      <TableCell className="text-right">{row.sites}</TableCell>
+                      <TableCell className="text-right">{row.customers}</TableCell>
+                      <TableCell className="text-right">{row.interactions}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
