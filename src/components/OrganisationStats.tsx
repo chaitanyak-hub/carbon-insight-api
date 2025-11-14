@@ -606,6 +606,30 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg)" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-2 font-semibold text-foreground">Recommendation Type</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Count</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Total Savings (£)</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Total Investment/Opportunity (£)</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Carbon Savings (kg)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {totalRecStats.map((row, idx) => (
+                    <tr key={idx} className="border-b border-border/50 hover:bg-muted/50">
+                      <td className="p-2 text-foreground">{row.type}</td>
+                      <td className="text-right p-2 text-foreground">{row.count}</td>
+                      <td className="text-right p-2 text-foreground">£{row.totalSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="text-right p-2 text-foreground">£{row.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="text-right p-2 text-foreground">{row.totalCarbonSavings.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       </div>
