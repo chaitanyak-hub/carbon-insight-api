@@ -43,15 +43,15 @@ async function fetchCarbonData(): Promise<{ sites: SiteData[] }> {
     throw new Error(`Failed to fetch carbon data: ${response.statusText}`);
   }
 
-  const data = await response.json();
-  console.log("Received data structure:", JSON.stringify(data).substring(0, 200));
+  const responseData = await response.json();
+  console.log("Received data structure:", JSON.stringify(responseData).substring(0, 200));
   
-  // The API returns { sites: [...] } directly
-  if (!data.sites || !Array.isArray(data.sites)) {
-    throw new Error(`Invalid data structure received: ${JSON.stringify(data).substring(0, 100)}`);
+  // The API returns { code, status, data: { sites: [...] } }
+  if (!responseData.data || !responseData.data.sites || !Array.isArray(responseData.data.sites)) {
+    throw new Error(`Invalid data structure received: ${JSON.stringify(responseData).substring(0, 100)}`);
   }
   
-  return data;
+  return { sites: responseData.data.sites };
 }
 
 function generateDailyStatsWorkbook(sites: SiteData[]) {
