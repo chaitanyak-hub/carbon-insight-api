@@ -4,6 +4,8 @@ import {
   getLast7DaysDailyStats,
   getCurrentMonthDailyStats,
   getPreviousMonthDailyStats,
+  getCurrentMonthWeeklyStats,
+  getPreviousMonthWeeklyStats,
   getTotalDailyStats,
   getLast7DaysRecommendationStats,
   getCurrentMonthRecommendationStats,
@@ -24,7 +26,9 @@ interface OrganisationStatsProps {
 const OrganisationStats = ({ data }: OrganisationStatsProps) => {
   const last7DaysData = getLast7DaysDailyStats(data);
   const currentMonthData = getCurrentMonthDailyStats(data);
+  const currentMonthWeeklyData = getCurrentMonthWeeklyStats(data);
   const previousMonthData = getPreviousMonthDailyStats(data);
+  const previousMonthWeeklyData = getPreviousMonthWeeklyStats(data);
   const totalData = getTotalDailyStats(data);
 
   const last7DaysRecStats = getLast7DaysRecommendationStats(data);
@@ -278,14 +282,14 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
         {/* Current Month */}
         <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-xl">Current Month - Daily Savings</CardTitle>
-            <CardDescription>Financial and carbon savings identified per day</CardDescription>
+            <CardTitle className="text-xl">Current Month - Weekly Savings</CardTitle>
+            <CardDescription>Financial and carbon savings identified per week</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={currentMonthData} margin={{ top: 20, right: 60, left: 20, bottom: 80 }}>
+              <BarChart data={currentMonthWeeklyData} margin={{ top: 20, right: 60, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                <XAxis dataKey="date" className="text-xs" angle={-45} textAnchor="end" height={80} />
+                <XAxis dataKey="date" className="text-xs" />
                 <YAxis yAxisId="left" className="text-xs" label={{ value: 'Savings (£)', angle: -90, position: 'insideLeft' }} />
                 <YAxis yAxisId="right" orientation="right" className="text-xs" label={{ value: 'Carbon (kg CO₂)', angle: 90, position: 'insideRight' }} />
                 <Tooltip 
@@ -306,20 +310,46 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 <Bar yAxisId="right" dataKey="carbonSavings" fill="url(#colorCarbon)" name="Carbon Savings (kg CO₂)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-2 font-semibold text-foreground">Week</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Sites</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Customers</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Interactions</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Savings (£)</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Carbon Savings (kg)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentMonthWeeklyData.map((row, idx) => (
+                    <tr key={idx} className="border-b border-border/50 hover:bg-muted/50">
+                      <td className="p-2 text-foreground">{row.date}</td>
+                      <td className="text-right p-2 text-foreground">{row.sites}</td>
+                      <td className="text-right p-2 text-foreground">{row.customers}</td>
+                      <td className="text-right p-2 text-foreground">{row.interactions}</td>
+                      <td className="text-right p-2 text-foreground">£{row.savings.toFixed(2)}</td>
+                      <td className="text-right p-2 text-foreground">{row.carbonSavings.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 
         {/* Previous Month */}
         <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-xl">Previous Month - Daily Savings</CardTitle>
-            <CardDescription>Financial and carbon savings identified per day</CardDescription>
+            <CardTitle className="text-xl">Previous Month - Weekly Savings</CardTitle>
+            <CardDescription>Financial and carbon savings identified per week</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={previousMonthData} margin={{ top: 20, right: 60, left: 20, bottom: 80 }}>
+              <BarChart data={previousMonthWeeklyData} margin={{ top: 20, right: 60, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                <XAxis dataKey="date" className="text-xs" angle={-45} textAnchor="end" height={80} />
+                <XAxis dataKey="date" className="text-xs" />
                 <YAxis yAxisId="left" className="text-xs" label={{ value: 'Savings (£)', angle: -90, position: 'insideLeft' }} />
                 <YAxis yAxisId="right" orientation="right" className="text-xs" label={{ value: 'Carbon (kg CO₂)', angle: 90, position: 'insideRight' }} />
                 <Tooltip 
@@ -340,6 +370,32 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 <Bar yAxisId="right" dataKey="carbonSavings" fill="url(#colorCarbon)" name="Carbon Savings (kg CO₂)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-2 font-semibold text-foreground">Week</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Sites</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Customers</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Interactions</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Savings (£)</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Carbon Savings (kg)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {previousMonthWeeklyData.map((row, idx) => (
+                    <tr key={idx} className="border-b border-border/50 hover:bg-muted/50">
+                      <td className="p-2 text-foreground">{row.date}</td>
+                      <td className="text-right p-2 text-foreground">{row.sites}</td>
+                      <td className="text-right p-2 text-foreground">{row.customers}</td>
+                      <td className="text-right p-2 text-foreground">{row.interactions}</td>
+                      <td className="text-right p-2 text-foreground">£{row.savings.toFixed(2)}</td>
+                      <td className="text-right p-2 text-foreground">{row.carbonSavings.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 

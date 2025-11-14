@@ -1,5 +1,5 @@
 import { SiteRecord } from "./chartHelpers";
-import { startOfMonth, endOfMonth, subMonths, subDays, startOfDay, endOfDay, format, eachDayOfInterval } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, subDays, startOfDay, endOfDay, format, eachDayOfInterval, startOfWeek, endOfWeek, eachWeekOfInterval } from "date-fns";
 
 export interface OrganisationStats {
   totalSites: number;
@@ -219,19 +219,68 @@ export const getTotalDailyStats = (records: SiteRecord[]): DailyStats[] => {
   
   const months = eachDayOfInterval({ start: startDate, end: endDate }).filter((day) => day.getDate() === 1);
   
-  return months.map((month) => {
-    const monthStart = startOfMonth(month);
-    const monthEnd = endOfMonth(month);
+  return months
+    .filter((month) => {
+      const monthNum = month.getMonth();
+      // Exclude July (6) and August (7)
+      return monthNum !== 6 && monthNum !== 7;
+    })
+    .map((month) => {
+      const monthStart = startOfMonth(month);
+      const monthEnd = endOfMonth(month);
+      
+      const monthSites = activeSites.filter(
+        (record) => isDateInRange(record.onboard_date, monthStart, monthEnd)
+      );
+
+      const uniqueCustomers = new Set(
+        monthSites.map((record) => record.contact_email).filter(Boolean)
+      ).size;
+
+      const totalInteractions = monthSites.reduce(
+        (sum, record) => sum + (record.logged_in_contacts || 0),
+        0
+      );
+
+      let totalSavings = 0;
+      let totalCarbonSavings = 0;
+
+      monthSites.forEach((record) => {
+        if (record.recommendations) {
+          const { savings, carbonSavings } = calculateSavingsFromRecommendations(record.recommendations);
+          totalSavings += savings;
+          totalCarbonSavings += carbonSavings;
+        }
+      });
+
+      return {
+        date: format(month, "MMM yyyy"),
+        sites: monthSites.length,
+        customers: uniqueCustomers,
+        interactions: totalInteractions,
+        savings: totalSavings,
+        carbonSavings: totalCarbonSavings,
+      };
+    });
+};
+
+const getWeeklyStatsForRange = (records: SiteRecord[], startDate: Date, endDate: Date): DailyStats[] => {
+  const weeks = eachWeekOfInterval({ start: startDate, end: endDate }, { weekStartsOn: 1 });
+  
+  return weeks.map((weekStart, index) => {
+    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
     
-    const monthSites = activeSites.filter(
-      (record) => isDateInRange(record.onboard_date, monthStart, monthEnd)
+    const weekSites = records.filter(
+      (record) =>
+        record.site_status === "ACTIVE" &&
+        isDateInRange(record.onboard_date, weekStart, weekEnd)
     );
 
     const uniqueCustomers = new Set(
-      monthSites.map((record) => record.contact_email).filter(Boolean)
+      weekSites.map((record) => record.contact_email).filter(Boolean)
     ).size;
 
-    const totalInteractions = monthSites.reduce(
+    const totalInteractions = weekSites.reduce(
       (sum, record) => sum + (record.logged_in_contacts || 0),
       0
     );
@@ -239,7 +288,7 @@ export const getTotalDailyStats = (records: SiteRecord[]): DailyStats[] => {
     let totalSavings = 0;
     let totalCarbonSavings = 0;
 
-    monthSites.forEach((record) => {
+    weekSites.forEach((record) => {
       if (record.recommendations) {
         const { savings, carbonSavings } = calculateSavingsFromRecommendations(record.recommendations);
         totalSavings += savings;
@@ -248,14 +297,29 @@ export const getTotalDailyStats = (records: SiteRecord[]): DailyStats[] => {
     });
 
     return {
-      date: format(month, "MMM yyyy"),
-      sites: monthSites.length,
+      date: `Week ${index + 1}`,
+      sites: weekSites.length,
       customers: uniqueCustomers,
       interactions: totalInteractions,
       savings: totalSavings,
       carbonSavings: totalCarbonSavings,
     };
   });
+};
+
+export const getCurrentMonthWeeklyStats = (records: SiteRecord[]): DailyStats[] => {
+  const now = new Date();
+  const startDate = startOfMonth(now);
+  const endDate = endOfDay(now);
+  return getWeeklyStatsForRange(records, startDate, endDate);
+};
+
+export const getPreviousMonthWeeklyStats = (records: SiteRecord[]): DailyStats[] => {
+  const now = new Date();
+  const previousMonth = subMonths(now, 1);
+  const startDate = startOfMonth(previousMonth);
+  const endDate = endOfMonth(previousMonth);
+  return getWeeklyStatsForRange(records, startDate, endDate);
 };
 
 // Recommendation Type Analysis
