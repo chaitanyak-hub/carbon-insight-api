@@ -77,13 +77,13 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
           />
           <MetricCard
             title="Total Savings"
-            value={`£${last7DaysTotals.totalSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            value={`£${(last7DaysTotals.totalSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             icon={DollarSign}
             description="Financial savings"
           />
           <MetricCard
             title="Carbon Savings"
-            value={`${last7DaysTotals.totalCarbonSavings.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kg`}
+            value={`${(last7DaysTotals.totalCarbonSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kg`}
             icon={Leaf}
             description="CO₂ reduction"
           />
