@@ -415,27 +415,27 @@ export const getTotalRecommendationStats = (records: SiteRecord[]): Recommendati
   return Array.from(typeMap.values()).sort((a, b) => b.totalSavings - a.totalSavings);
 };
 
-// October 2024 specific stats
+// October 2025 specific stats
 export const getOctoberDailyStats = (records: SiteRecord[]): DailyStats[] => {
-  const october2024Start = new Date(2024, 9, 1); // October 1, 2024
-  const october2024End = new Date(2024, 9, 31, 23, 59, 59); // October 31, 2024
-  return getDailyStatsForRange(records, october2024Start, october2024End);
+  const october2025Start = new Date(2025, 9, 1); // October 1, 2025
+  const october2025End = new Date(2025, 9, 31, 23, 59, 59); // October 31, 2025
+  return getDailyStatsForRange(records, october2025Start, october2025End);
 };
 
 export const getOctoberWeeklyStats = (records: SiteRecord[]): DailyStats[] => {
-  const october2024Start = new Date(2024, 9, 1);
-  const october2024End = new Date(2024, 9, 31, 23, 59, 59);
-  return getWeeklyStatsForRange(records, october2024Start, october2024End);
+  const october2025Start = new Date(2025, 9, 1);
+  const october2025End = new Date(2025, 9, 31, 23, 59, 59);
+  return getWeeklyStatsForRange(records, october2025Start, october2025End);
 };
 
 export const getOctoberStats = (records: SiteRecord[]): OrganisationStats => {
-  const october2024Start = new Date(2024, 9, 1);
-  const october2024End = new Date(2024, 9, 31, 23, 59, 59);
-  return getOrganisationStats(records, october2024Start, october2024End);
+  const october2025Start = new Date(2025, 9, 1);
+  const october2025End = new Date(2025, 9, 31, 23, 59, 59);
+  return getOrganisationStats(records, october2025Start, october2025End);
 };
 
 export const getOctoberRecommendationStats = (records: SiteRecord[]): RecommendationTypeStats[] => {
-  const october2024Start = new Date(2024, 9, 1);
-  const october2024End = new Date(2024, 9, 31, 23, 59, 59);
-  return getRecommendationTypeStatsForRange(records, october2024Start, october2024End);
+  const october2025Start = new Date(2025, 9, 1);
+  const october2025End = new Date(2025, 9, 31, 23, 59, 59);
+  return getRecommendationTypeStatsForRange(records, october2025Start, october2025End);
 };
