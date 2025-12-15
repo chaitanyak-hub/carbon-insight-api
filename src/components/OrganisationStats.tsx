@@ -15,6 +15,10 @@ import {
   getCurrentMonthStats,
   getPreviousMonthStats,
   getTotalStats,
+  getOctoberDailyStats,
+  getOctoberWeeklyStats,
+  getOctoberStats,
+  getOctoberRecommendationStats,
 } from "@/utils/organisationHelpers";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp, DollarSign, Leaf, Package } from "lucide-react";
@@ -30,16 +34,20 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
   const previousMonthData = getPreviousMonthDailyStats(data);
   const previousMonthWeeklyData = getPreviousMonthWeeklyStats(data);
   const totalData = getTotalDailyStats(data);
+  const octoberDailyData = getOctoberDailyStats(data);
+  const octoberWeeklyData = getOctoberWeeklyStats(data);
 
   const last7DaysRecStats = getLast7DaysRecommendationStats(data);
   const currentMonthRecStats = getCurrentMonthRecommendationStats(data);
   const previousMonthRecStats = getPreviousMonthRecommendationStats(data);
   const totalRecStats = getTotalRecommendationStats(data);
+  const octoberRecStats = getOctoberRecommendationStats(data);
 
   const last7DaysTotals = getLast7DaysStats(data);
   const currentMonthTotals = getCurrentMonthStats(data);
   const previousMonthTotals = getPreviousMonthStats(data);
   const totalTotals = getTotalStats(data);
+  const octoberTotals = getOctoberStats(data);
 
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
@@ -227,6 +235,189 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                 <Bar dataKey="interactions" fill="url(#colorInteractions)" name="Interactions" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* October 2024 Statistics */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Package className="h-6 w-6 text-primary" />
+          <h3 className="text-2xl font-bold text-foreground">October 2024 Statistics</h3>
+        </div>
+
+        {/* October Overview Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            title="Total Sites"
+            value={octoberTotals.totalSites}
+            icon={Package}
+            description="Sites added in October"
+          />
+          <MetricCard
+            title="Total Savings"
+            value={`£${(octoberTotals.totalSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            icon={DollarSign}
+            description="Financial savings"
+          />
+          <MetricCard
+            title="Carbon Savings"
+            value={`${(octoberTotals.totalCarbonSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kg`}
+            icon={Leaf}
+            description="CO₂ reduction"
+          />
+          <MetricCard
+            title="Unique Customers"
+            value={octoberTotals.uniqueCustomers}
+            icon={TrendingUp}
+            description="Active customers"
+          />
+        </div>
+
+        {/* October Daily Site Activity */}
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="text-xl">October 2024 - Daily Site Activity</CardTitle>
+            <CardDescription>Sites added, unique customers, and interactions per day</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={octoberDailyData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                <XAxis dataKey="date" className="text-xs" angle={-45} textAnchor="end" height={80} />
+                <YAxis className="text-xs" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="sites" fill="url(#colorSites)" name="Sites Added" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="customers" fill="url(#colorCustomers)" name="Unique Customers" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="interactions" fill="url(#colorInteractions)" name="Interactions" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* October Weekly Savings */}
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="text-xl">October 2024 - Weekly Savings</CardTitle>
+            <CardDescription>Financial and carbon savings identified per week</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={octoberWeeklyData} margin={{ top: 20, right: 60, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                <XAxis dataKey="date" className="text-xs" />
+                <YAxis yAxisId="left" className="text-xs" label={{ value: 'Savings (£)', angle: -90, position: 'insideLeft' }} />
+                <YAxis yAxisId="right" orientation="right" className="text-xs" label={{ value: 'Carbon (kg CO₂)', angle: 90, position: 'insideRight' }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                  formatter={(value: any, name: string) => {
+                    if (name === 'Total Savings (£)') return `£${Number(value).toFixed(2)}`;
+                    if (name === 'Carbon Savings (kg CO₂)') return `${Number(value).toFixed(2)} kg`;
+                    return value;
+                  }}
+                />
+                <Legend />
+                <Bar yAxisId="left" dataKey="savings" fill="url(#colorSavings)" name="Total Savings (£)" radius={[8, 8, 0, 0]} />
+                <Bar yAxisId="right" dataKey="carbonSavings" fill="url(#colorCarbon)" name="Carbon Savings (kg CO₂)" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-2 font-semibold text-foreground">Week</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Sites</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Customers</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Interactions</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Savings (£)</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Carbon Savings (kg)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {octoberWeeklyData.map((row, idx) => (
+                    <tr key={idx} className="border-b border-border/50 hover:bg-muted/50">
+                      <td className="p-2 text-foreground">{row.date}</td>
+                      <td className="text-right p-2 text-foreground">{row.sites || 0}</td>
+                      <td className="text-right p-2 text-foreground">{row.customers || 0}</td>
+                      <td className="text-right p-2 text-foreground">{row.interactions || 0}</td>
+                      <td className="text-right p-2 text-foreground">£{(row.savings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="text-right p-2 text-foreground">{(row.carbonSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* October Recommendation Analysis */}
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="text-xl">October 2024 - Recommendation Analysis</CardTitle>
+            <CardDescription>Investment/Opportunity, savings, and carbon savings by recommendation type</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={octoberRecStats} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                <XAxis dataKey="type" className="text-xs" angle={-45} textAnchor="end" height={80} />
+                <YAxis className="text-xs" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                  formatter={(value: any, name: string) => {
+                    if (name === 'Investment/Opportunity (£)' || name === 'Total Savings (£)') return `£${Number(value).toFixed(2)}`;
+                    if (name === 'Carbon Savings (kg CO₂)') return `${Number(value).toFixed(2)} kg`;
+                    return value;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="totalCost" fill="hsl(var(--chart-4))" name="Investment/Opportunity (£)" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="totalSavings" fill="hsl(var(--chart-1))" name="Total Savings (£)" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="totalCarbonSavings" fill="hsl(var(--chart-2))" name="Carbon Savings (kg CO₂)" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-2 font-semibold text-foreground">Type</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Count</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Total Savings (£)</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Investment/Opportunity (£)</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Carbon Savings (kg)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {octoberRecStats.map((stat, idx) => (
+                    <tr key={idx} className="border-b border-border/50 hover:bg-muted/50">
+                      <td className="p-2 text-foreground font-medium">{stat.type}</td>
+                      <td className="text-right p-2 text-foreground">{(stat.count || 0).toLocaleString()}</td>
+                      <td className="text-right p-2 text-foreground">£{(stat.totalSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="text-right p-2 text-foreground">£{(stat.totalCost || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="text-right p-2 text-foreground">{(stat.totalCarbonSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       </div>
