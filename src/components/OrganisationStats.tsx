@@ -239,11 +239,11 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
         </Card>
       </div>
 
-      {/* October 2024 Statistics */}
+      {/* October 2025 Statistics */}
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <Package className="h-6 w-6 text-primary" />
-          <h3 className="text-2xl font-bold text-foreground">October 2024 Statistics</h3>
+          <h3 className="text-2xl font-bold text-foreground">October 2025 Statistics</h3>
         </div>
 
         {/* October Overview Metrics */}
@@ -277,7 +277,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
         {/* October Daily Site Activity */}
         <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-xl">October 2024 - Daily Site Activity</CardTitle>
+            <CardTitle className="text-xl">October 2025 - Daily Site Activity</CardTitle>
             <CardDescription>Sites added, unique customers, and interactions per day</CardDescription>
           </CardHeader>
           <CardContent>
@@ -306,7 +306,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
         {/* October Weekly Savings */}
         <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-xl">October 2024 - Weekly Savings</CardTitle>
+            <CardTitle className="text-xl">October 2025 - Weekly Savings</CardTitle>
             <CardDescription>Financial and carbon savings identified per week</CardDescription>
           </CardHeader>
           <CardContent>
@@ -366,7 +366,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
         {/* October Recommendation Analysis */}
         <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-xl">October 2024 - Recommendation Analysis</CardTitle>
+            <CardTitle className="text-xl">October 2025 - Recommendation Analysis</CardTitle>
             <CardDescription>Investment/Opportunity, savings, and carbon savings by recommendation type</CardDescription>
           </CardHeader>
           <CardContent>
