@@ -634,6 +634,7 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                   <tr className="border-b border-border">
                     <th className="text-left p-2 font-semibold text-foreground">Month</th>
                     <th className="text-right p-2 font-semibold text-foreground">Sites</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Unique Customers</th>
                     <th className="text-right p-2 font-semibold text-foreground">Energy Cost (£)</th>
                     <th className="text-right p-2 font-semibold text-foreground">Savings (£)</th>
                     <th className="text-right p-2 font-semibold text-foreground">Carbon Savings (kg)</th>
@@ -644,12 +645,23 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                     <tr key={idx} className="border-b border-border/50 hover:bg-muted/50">
                       <td className="p-2 text-foreground">{row.date}</td>
                       <td className="text-right p-2 text-foreground">{row.sites || 0}</td>
+                      <td className="text-right p-2 text-foreground">{row.customers || 0}</td>
                       <td className="text-right p-2 text-foreground">£{(row.energyCost || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       <td className="text-right p-2 text-foreground">£{(row.savings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       <td className="text-right p-2 text-foreground">{(row.carbonSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     </tr>
                   ))}
                 </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-border font-bold bg-muted/30">
+                    <td className="p-2 text-foreground">Totals</td>
+                    <td className="text-right p-2 text-foreground">{totalTotals.totalSites}</td>
+                    <td className="text-right p-2 text-foreground">{totalTotals.uniqueCustomers}</td>
+                    <td className="text-right p-2 text-foreground">£{(totalTotals.totalEnergyCost || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="text-right p-2 text-foreground">£{(totalTotals.totalSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="text-right p-2 text-foreground">{(totalTotals.totalCarbonSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </CardContent>
