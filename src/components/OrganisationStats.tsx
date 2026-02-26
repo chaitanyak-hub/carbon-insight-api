@@ -594,14 +594,20 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
         <Card className="border-2">
           <CardHeader>
             <CardTitle className="text-xl">Total (All Time) - Monthly Savings</CardTitle>
-            <CardDescription>Financial and carbon savings identified per month</CardDescription>
+            <CardDescription>Financial savings, energy cost, and carbon savings identified per month</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={400}>
               <BarChart data={totalData} margin={{ top: 20, right: 60, left: 20, bottom: 80 }}>
+                <defs>
+                  <linearGradient id="colorEnergyCost" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--chart-4))" stopOpacity={0.9}/>
+                    <stop offset="95%" stopColor="hsl(var(--chart-4))" stopOpacity={0.6}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                 <XAxis dataKey="date" className="text-xs" angle={-45} textAnchor="end" height={80} />
-                <YAxis yAxisId="left" className="text-xs" label={{ value: 'Savings (£)', angle: -90, position: 'insideLeft' }} />
+                <YAxis yAxisId="left" className="text-xs" label={{ value: 'Amount (£)', angle: -90, position: 'insideLeft' }} />
                 <YAxis yAxisId="right" orientation="right" className="text-xs" label={{ value: 'Carbon (kg CO₂)', angle: 90, position: 'insideRight' }} />
                 <Tooltip 
                   contentStyle={{ 
@@ -611,16 +617,41 @@ const OrganisationStats = ({ data }: OrganisationStatsProps) => {
                     boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                   }}
                   formatter={(value: any, name: string) => {
-                    if (name === 'Total Savings (£)') return `£${Number(value).toFixed(2)}`;
-                    if (name === 'Carbon Savings (kg CO₂)') return `${Number(value).toFixed(2)} kg`;
+                    if (name.includes('£')) return `£${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    if (name.includes('CO₂')) return `${Number(value).toFixed(2)} kg`;
                     return value;
                   }}
                 />
                 <Legend />
+                <Bar yAxisId="left" dataKey="energyCost" fill="url(#colorEnergyCost)" name="Current Energy Cost (£)" radius={[8, 8, 0, 0]} />
                 <Bar yAxisId="left" dataKey="savings" fill="url(#colorSavings)" name="Total Savings (£)" radius={[8, 8, 0, 0]} />
                 <Bar yAxisId="right" dataKey="carbonSavings" fill="url(#colorCarbon)" name="Carbon Savings (kg CO₂)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-2 font-semibold text-foreground">Month</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Sites</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Energy Cost (£)</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Savings (£)</th>
+                    <th className="text-right p-2 font-semibold text-foreground">Carbon Savings (kg)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {totalData.map((row, idx) => (
+                    <tr key={idx} className="border-b border-border/50 hover:bg-muted/50">
+                      <td className="p-2 text-foreground">{row.date}</td>
+                      <td className="text-right p-2 text-foreground">{row.sites || 0}</td>
+                      <td className="text-right p-2 text-foreground">£{(row.energyCost || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="text-right p-2 text-foreground">£{(row.savings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="text-right p-2 text-foreground">{(row.carbonSavings || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       </div>

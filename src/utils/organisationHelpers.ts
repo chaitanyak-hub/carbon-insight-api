@@ -16,6 +16,7 @@ export interface DailyStats {
   interactions: number;
   savings: number;
   carbonSavings: number;
+  energyCost?: number;
 }
 
 export interface RecommendationTypeStats {
@@ -253,6 +254,12 @@ export const getTotalDailyStats = (records: SiteRecord[]): DailyStats[] => {
         }
       });
 
+      const energyCost = monthSites.reduce((sum, record) => {
+        const elecCost = (record.annual_elec_consumption || 0) * (record.elec_unit_rate || 0);
+        const gasCost = (record.annual_gas_consumption || 0) * (record.gas_unit_rate || 0);
+        return sum + elecCost + gasCost;
+      }, 0);
+
       return {
         date: format(month, "MMM yyyy"),
         sites: monthSites.length,
@@ -260,6 +267,7 @@ export const getTotalDailyStats = (records: SiteRecord[]): DailyStats[] => {
         interactions: totalInteractions,
         savings: totalSavings,
         carbonSavings: totalCarbonSavings,
+        energyCost,
       };
     });
 };
