@@ -7,6 +7,7 @@ export interface OrganisationStats {
   totalInteractions: number;
   totalSavings: number;
   totalCarbonSavings: number;
+  totalEnergyCost: number;
 }
 
 export interface DailyStats {
@@ -80,12 +81,19 @@ export const getOrganisationStats = (
     }
   });
 
+  const totalEnergyCost = activeSites.reduce((sum, record) => {
+    const elecCost = (record.annual_elec_consumption || 0) * (record.elec_unit_rate || 0);
+    const gasCost = (record.annual_gas_consumption || 0) * (record.gas_unit_rate || 0);
+    return sum + elecCost + gasCost;
+  }, 0);
+
   return {
     totalSites: activeSites.length,
     uniqueCustomers,
     totalInteractions,
     totalSavings,
     totalCarbonSavings,
+    totalEnergyCost,
   };
 };
 
@@ -134,12 +142,19 @@ export const getTotalStats = (records: SiteRecord[]): OrganisationStats => {
     }
   });
 
+  const totalEnergyCost = activeSites.reduce((sum, record) => {
+    const elecCost = (record.annual_elec_consumption || 0) * (record.elec_unit_rate || 0);
+    const gasCost = (record.annual_gas_consumption || 0) * (record.gas_unit_rate || 0);
+    return sum + elecCost + gasCost;
+  }, 0);
+
   return {
     totalSites: activeSites.length,
     uniqueCustomers,
     totalInteractions,
     totalSavings,
     totalCarbonSavings,
+    totalEnergyCost,
   };
 };
 
