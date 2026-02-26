@@ -82,8 +82,8 @@ export const getOrganisationStats = (
   });
 
   const totalEnergyCost = activeSites.reduce((sum, record) => {
-    const elecCost = (record.annual_elec_consumption || 0) * (record.elec_unit_rate || 0);
-    const gasCost = (record.annual_gas_consumption || 0) * (record.gas_unit_rate || 0);
+    const elecCost = (parseFloat(record.annual_elec_consumption) || 0) * (parseFloat(record.elec_unit_rate) || 0);
+    const gasCost = (parseFloat(record.annual_gas_consumption) || 0) * (parseFloat(record.gas_unit_rate) || 0);
     return sum + elecCost + gasCost;
   }, 0);
 
@@ -143,8 +143,8 @@ export const getTotalStats = (records: SiteRecord[]): OrganisationStats => {
   });
 
   const totalEnergyCost = activeSites.reduce((sum, record) => {
-    const elecCost = (record.annual_elec_consumption || 0) * (record.elec_unit_rate || 0);
-    const gasCost = (record.annual_gas_consumption || 0) * (record.gas_unit_rate || 0);
+    const elecCost = (parseFloat(record.annual_elec_consumption) || 0) * (parseFloat(record.elec_unit_rate) || 0);
+    const gasCost = (parseFloat(record.annual_gas_consumption) || 0) * (parseFloat(record.gas_unit_rate) || 0);
     return sum + elecCost + gasCost;
   }, 0);
 
@@ -270,8 +270,8 @@ export const getTotalDailyStats = (records: SiteRecord[]): DailyStats[] => {
       });
 
       const energyCost = monthSites.reduce((sum, record) => {
-        const elecCost = (record.annual_elec_consumption || 0) * (record.elec_unit_rate || 0);
-        const gasCost = (record.annual_gas_consumption || 0) * (record.gas_unit_rate || 0);
+        const elecCost = (parseFloat(record.annual_elec_consumption) || 0) * (parseFloat(record.elec_unit_rate) || 0);
+        const gasCost = (parseFloat(record.annual_gas_consumption) || 0) * (parseFloat(record.gas_unit_rate) || 0);
         return sum + elecCost + gasCost;
       }, 0);
 

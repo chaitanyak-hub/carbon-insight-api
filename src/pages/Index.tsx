@@ -74,18 +74,6 @@ const Index = () => {
         const records = Array.isArray(result)
           ? result
           : (result?.data?.sites || result?.sites || result?.records || result?.data || []);
-        // Debug: log energy cost fields from first few active sites
-        const activeSample = records.filter((r: any) => r.site_status === 'ACTIVE').slice(0, 3);
-        activeSample.forEach((s: any, i: number) => {
-          console.log(`Site ${i}:`, {
-            annual_elec_consumption: s.annual_elec_consumption,
-            annual_electricity_consumption: s.annual_electricity_consumption,
-            elec_unit_rate: s.elec_unit_rate,
-            annual_gas_consumption: s.annual_gas_consumption,
-            gas_unit_rate: s.gas_unit_rate,
-            onboard_date: s.onboard_date,
-          });
-        });
         setData(records);
       } catch (err) {
         console.error('Error details:', err);
